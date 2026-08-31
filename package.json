@@ -1,7 +1,7 @@
 {
-  "name": "pdw-app",
+  "name": "final-project-pdw",
   "version": "1.0.0",
-  "description": "Template fullstack Express + SQLite + HTML/Bootstrap buat PDW - tinggal npm run dev",
+  "description": "Final Project PDW - Toko Bahan Pertanian. Express + SQLite + HTML/Bootstrap + Gemini AI",
   "main": "app.js",
   "type": "commonjs",
   "scripts": {
@@ -10,8 +10,11 @@
     "seed": "node seeders/seed.js"
   },
   "dependencies": {
+    "@google/genai": "^0.5.0",
+    "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-session": "^1.18.0",
     "sequelize": "^6.37.3",
     "sqlite3": "^5.1.7"
   },

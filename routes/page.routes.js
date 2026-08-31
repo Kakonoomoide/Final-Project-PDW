@@ -1,10 +1,11 @@
 const express = require('express');
-const path = require('path');
 const router = express.Router();
+const page = require('../controllers/page.controller');
 
-// serve views/index.html pas orang buka "/"
-router.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../views/index.html'));
-});
+router.get('/', page.landingPage); // M1
+router.get('/login', page.loginPage);
+router.get('/register', page.registerPage);
+router.get('/produk', page.userProductsPage); // M3
+router.get('/chat', page.chatPage); // M5
 
 module.exports = router;

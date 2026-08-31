@@ -1,29 +1,24 @@
 require('dotenv').config();
-const { sequelize } = require('../models');
+const bcrypt = require('bcrypt');
+const { sequelize, User } = require('../models');
 
-/**
- * Belum ada model apapun di template ini, jadi seeder ini belum
- * nge-insert data apa-apa. Ini contoh KERANGKA yang bisa langsung
- * dipake pas udah nambah model pertama - liat README di folder ini
- * buat contoh lengkapnya.
- */
+const SALT_ROUNDS = 10;
+
 async function seed() {
   try {
     await sequelize.authenticate();
     console.log('Koneksi database berhasil');
     await sequelize.sync();
 
-    // TODO: ganti bagian ini pas udah ada model, contoh:
-    // const { Product } = require('../models');
-    // const count = await Product.count();
-    // if (count === 0) {
-    //   await Product.bulkCreate([...]);
-    //   console.log('Data dummy berhasil ditambahin');
-    // } else {
-    //   console.log('Data udah ada, skip supaya gak dobel');
-    // }
+    const hashedPassword = await bcrypt.hash('admin123', SALT_ROUNDS);
+    const [admin] = await User.findOrCreate({
+      where: { email: 'admin@tanimakmur.com' },
+      defaults: { name: 'Admin', password: hashedPassword, role: 'admin' },
+    });
 
-    console.log('Belum ada model buat di-seed. Cek README di folder seeders/ buat contohnya.');
+    console.log('Admin siap:', admin.email);
+    console.log('Login admin: email=admin@tanimakmur.com password=admin123');
+    console.log('\nSeeding selesai ✅');
     process.exit(0);
   } catch (err) {
     console.error('Gagal seeding:', err.message);

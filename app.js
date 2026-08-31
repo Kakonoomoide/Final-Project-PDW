@@ -1,18 +1,30 @@
 const express = require('express');
 const path = require('path');
+const session = require('express-session');
 
 const config = require('./config/env');
 const { sequelize } = require('./models');
 
-const healthRoutes = require('./routes/health.routes');
+const authRoutes = require('./routes/auth.routes');
 const pageRoutes = require('./routes/page.routes');
+const adminPageRoutes = require('./routes/admin.page.routes');
 
 const app = express();
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/api/health', healthRoutes);
+app.use(
+  session({
+    secret: config.sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 1000 * 60 * 60 * 24, httpOnly: true },
+  })
+);
+
+app.use('/api/auth', authRoutes);
+app.use('/admin', adminPageRoutes);
 app.use('/', pageRoutes);
 
 async function start() {

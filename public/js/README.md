@@ -1,30 +1,12 @@
 # public/js/
 
-Kode JavaScript yang jalan di **browser** (client-side), bukan di
-server. Folder `public/` diserve langsung sama Express
-(`app.use(express.static('public'))`), jadi file `public/js/main.js`
-bisa diakses browser lewat `/js/main.js`.
+JS yang jalan di browser (client-side), diserve statis lewat `/js/*.js`.
 
-## Isi folder ini
+- `include-partials.js` - inject navbar/sidebar dari `public/partials/`
+  ke elemen `data-include`. WAJIB di-include di semua halaman.
+- `navbar-auth.js` - tampilin status login (Halo, nama / Login-Register)
+  di navbar, handle tombol logout
+- `auth.js` - handle submit form login & register
 
-- **`main.js`** - `checkHealth()`, fetch ke `/api/health`, terus update
-  teks & warna badge status langsung di DOM (`document.getElementById`).
-  Dipanggil otomatis pas halaman dibuka (`DOMContentLoaded`), dan juga
-  pas tombol "Cek Ulang" diklik - dua-duanya manggil fungsi yang sama,
-  gak ada logic yang ditulis dobel.
-
-## Kenapa vanilla JS (bukan React/framework)
-
-Ini konsisten sama gaya `views/` yang pake HTML biasa (bukan template
-engine) - jadi sisi client-nya juga vanilla JS, fetch ke API terus
-manipulasi DOM manual. Kalo project makin kompleks dan butuh banyak
-halaman/komponen interaktif, ini kandidat kuat buat di-upgrade ke
-Vite + React (kayak folder `frontend/` di template lain).
-
-## Cara nambah script baru
-
-Bikin file baru di sini (misal `products.js`), terus include di HTML
-yang butuh:
-```html
-<script src="/js/products.js"></script>
-```
+Mahasiswa yang bikin fitur baru (chat, CRUD, dll) bikin file JS baru
+di sini, jangan numpuk semua logic di 1 file.

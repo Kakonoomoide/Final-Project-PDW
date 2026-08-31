@@ -1,74 +1,99 @@
-# PDW App
+# Tani Makmur — Final Project PDW
 
-Template fullstack Express + SQLite + HTML/Bootstrap. Beda sama template
-sebelumnya (Vite+React terpisah), ini **1 project monolitik** - Express
-yang sekaligus serve halaman HTML dan API-nya, gak ada proses build/dev
-server terpisah.
+Toko bahan pertanian: Express + SQLite + HTML/Bootstrap + Gemini AI.
+Kerjaan tim, pembagian fitur & detail lengkap ada di [`PRD.md`](./PRD.md).
 
-## Struktur
+## Yang udah jadi (dikerjain instruktur)
+
+1. ✅ Login admin & register user biasa (session-based, 1 tabel `users`
+   dibedain lewat `role`)
+2. ✅ Struktur database (`users`, `products`, `news`)
+3. ✅ Navbar & sidebar admin, navbar user (reusable lewat partial HTML)
+
+## Yang masih placeholder (tinggal diisi tiap mahasiswa)
+
+Semua halaman di bawah udah ke-wire navbar/sidebar-nya, tinggal ganti
+`<h1>` placeholder-nya jadi UI beneran. Liat `PRD.md` bagian 5 buat
+detail tiap fitur.
+
+| Halaman | Mahasiswa | Fitur |
+|---|---|---|
+| `views/user/landing.html` | M1 | Landing page + cuaca + AI waktu tanam |
+| `views/admin/news.html` | M2 | CRUD News + AI caption |
+| `views/user/products.html` | M3 | Browse produk + AI product finder |
+| `views/admin/products.html` | M4 | CRUD produk + AI deskripsi |
+| `views/user/chat.html` | M5 | Chat AI + deteksi hama/penyakit foto |
+
+## Struktur folder
 ```
-pdw-app/
-├── app.js                      # entry point
-├── config/                      # env variable & koneksi database (README sendiri)
-├── models/                      # definisi tabel Sequelize (README sendiri)
-├── controllers/                 # jembatan HTTP <-> logic bisnis (README sendiri)
-├── services/                    # logic bisnis (README sendiri)
-├── routes/                      # daftar endpoint & halaman (README sendiri)
-├── seeders/                     # script isi data awal (README sendiri)
-├── utils/                       # helper umum (README sendiri)
-├── views/                       # halaman HTML (README sendiri)
-├── public/js/                   # JS sisi client (README sendiri)
-├── .env.example
-└── package.json
-```
-
-Tiap folder punya README sendiri yang jelasin isi & fungsinya - buka
-folder yang mau diutak-atik, baca README-nya dulu.
-
-## Alur request-nya
-
-```
-Browser buka "/"
-  -> routes/page.routes.js -> res.sendFile(views/index.html)
-  -> browser render HTML, load public/js/main.js
-  -> main.js fetch("/api/health")
-       -> routes/health.routes.js
-       -> controllers/health.controller.js
-       -> services/health.service.js
-       -> utils/response.js (bungkus jadi {code, success, message, data})
-  -> main.js update tampilan (badge + JSON) langsung di DOM
+final-project-pdw/
+├── app.js
+├── config/          # env & koneksi database
+├── models/          # users, products, news (Sequelize)
+├── controllers/      # auth.controller.js, page.controller.js
+├── services/         # auth.service.js
+├── middlewares/       # requireAuth, requireAdmin, requireAdminPage
+├── routes/            # auth.routes.js, page.routes.js, admin.page.routes.js
+├── utils/             # response.js (format response seragam)
+├── seeders/            # bikin akun admin default
+├── views/
+│   ├── auth/            # login.html, register.html
+│   ├── admin/            # dashboard.html + placeholder M2, M4
+│   └── user/              # placeholder M1, M3, M5
+└── public/
+    ├── js/                 # include-partials.js, navbar-auth.js, auth.js
+    └── partials/            # navbar-admin.html, sidebar-admin.html, navbar-user.html
 ```
 
 ## Cara install & jalanin
 
 ```bash
 cp .env.example .env
+# isi GEMINI_API_KEY & WEATHER_API_KEY di .env (minta ke ketua tim/instruktur
+# kalau belum ada, SATU key yang sama dipake bareng-bareng)
+
 npm install
+npm run seed    # bikin akun admin default
 npm run dev
 ```
 
-Buka `http://localhost:3000` di browser. Server jalan pake `nodemon`,
-jadi tiap ubah file otomatis restart, gak perlu matiin-nyalain manual.
+Buka `http://localhost:3000`.
 
-## Kenapa SQLite
+**Login admin default** (dari seeder): `admin@tanimakmur.com` / `admin123`
 
-Gak butuh install/setup database server terpisah (beda sama
-Postgres/MySQL) - datanya kesimpen di 1 file (`database.sqlite`) yang
-otomatis kebuat sendiri pas server pertama kali jalan. Cocok banget
-buat tugas kuliah/development, tinggal `npm install` langsung bisa jalan.
+## Cara kerja navbar/sidebar (penting dipahami sebelum nambah halaman)
 
-## Endpoint
+Karena `views/` pake HTML biasa (bukan EJS), navbar/sidebar gak bisa
+`<%- include(...) %>`. Solusinya: elemen `<div data-include="/partials/xxx.html">`
+otomatis diisi isi file itu lewat `public/js/include-partials.js`
+(fetch + inject ke DOM). Jadi tiap halaman baru, copy pola ini:
 
-| Method | Endpoint | Keterangan |
-|---|---|---|
-| GET | / | Halaman utama (HTML) |
-| GET | /api/health | Cek backend hidup - dipanggil `public/js/main.js` |
+```html
+<div data-include="/partials/navbar-user.html"></div>
+<main class="container py-4">
+  <h1>Halaman Baru</h1>
+</main>
+<script src="/js/include-partials.js"></script>
+<script src="/js/navbar-auth.js"></script>
+```
 
-## Cara pake template ini buat project baru
+## Cara nambah endpoint API baru
 
-1. **Nambah model**: liat `models/README.md`
-2. **Nambah fitur (CRUD dst)**: bikin `services/<nama>.service.js` →
-   `controllers/<nama>.controller.js` → `routes/<nama>.routes.js` →
-   daftarin di `app.js`
-3. **Nambah halaman**: liat `views/README.md`
-4. **Isi data awal**: liat `seeders/README.md`, jalanin `npm run seed`
+Ikutin pola yang udah ada di `auth.*`:
+1. `services/<nama>.service.js` — logic bisnis, query ke model
+2. `controllers/<nama>.controller.js` — panggil service, balikin lewat `sendResponse()`
+3. `routes/<nama>.routes.js` — daftarin path + method
+4. Mount di `app.js`: `app.use('/api/<nama>', require('./routes/<nama>.routes'))`
+
+## Cara pake Gemini AI (buat M1, M2, M3, M4, M5)
+
+Semua fitur AI pake API key yang sama (`GEMINI_API_KEY` di `.env`).
+Bikin `services/gemini.service.js` (belum ada, dibuat oleh mahasiswa yang
+pertama butuh) isinya setup client `@google/genai` + fungsi-fungsi kayak
+`generateCaption()`, `generateDescription()`, `chatWithAI()`, dst -
+biar semua mahasiswa yang butuh Gemini tinggal import dari 1 tempat
+(DRY), gak masing-masing bikin koneksi Gemini sendiri-sendiri.
+
+Contoh referensi cara pake `@google/genai` (chat multi-turn + function
+calling) ada di project sebelumnya (`telegram-shop-bot`), bisa dicontek
+polanya.

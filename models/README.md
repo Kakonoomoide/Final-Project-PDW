@@ -1,39 +1,10 @@
 # models/
 
-Definisi tabel database pake Sequelize. Satu file = satu tabel.
+Definisi tabel database (Sequelize). Struktur lengkap ada di `PRD.md` bagian 4.
 
-## Isi folder ini (saat ini)
+- `user.model.js` - admin & user biasa (dibedain kolom `role`)
+- `product.model.js` - bahan pertanian (M3, M4)
+- `news.model.js` - berita (M1, M2)
 
-- **`index.js`** - export instance `sequelize` (dari `config/database.js`).
-  Belum ada model apapun di template ini, tinggal ditambah pas butuh.
-
-## Cara nambah model baru
-
-Bikin file `<nama>.model.js`, contoh `product.model.js`:
-```js
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
-
-const Product = sequelize.define(
-  'Product',
-  {
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    name: { type: DataTypes.STRING, allowNull: false },
-    price: { type: DataTypes.INTEGER, allowNull: false },
-  },
-  { tableName: 'products', timestamps: true }
-);
-
-module.exports = Product;
-```
-
-Terus daftarin di `models/index.js`:
-```js
-const sequelize = require('../config/database');
-const Product = require('./product.model');
-
-module.exports = { sequelize, Product };
-```
-
-`sequelize.sync()` (dipanggil di `app.js` pas server nyala) otomatis
-bikin tabelnya kalo belum ada - gak perlu bikin manual kayak SQL biasa.
+Kalo butuh tabel baru (misal riwayat chat buat M5), bikin file baru di sini
+ngikutin pola yang sama, terus daftarin di `index.js`.
