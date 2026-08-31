@@ -8,31 +8,40 @@ let aiClient = null;
  */
 function getClient() {
   const apiKey = config.geminiApiKey;
-  if (!apiKey || apiKey === 'isi-api-key-kalian-disini' || apiKey.trim() === '') {
+
+  if (
+    !apiKey ||
+    apiKey === 'isi-api-key-kalian-disini' ||
+    apiKey.trim() === ''
+  ) {
     throw new Error(
       'GEMINI_API_KEY belum dikonfigurasi di file .env. Silakan masukkan API key Gemini yang valid.'
     );
   }
+
   if (!aiClient) {
     aiClient = new GoogleGenAI({ apiKey });
   }
+
   return aiClient;
 }
 
 /**
- * Fitur M4: Generate rekomendasi deskripsi produk bahan pertanian
- * @param {Object} params
- * @param {string} params.name - Nama produk (misal: "Pupuk Urea NPK Mutiara 16-16-16")
- * @param {string} [params.category] - Kategori produk (bibit, pupuk, alat, pestisida)
- * @param {string} [params.notes] - Catatan atau instruksi khusus opsional
- * @returns {Promise<string>} Deskripsi produk yang dihasilkan oleh Gemini AI
+ * M4: Generate rekomendasi deskripsi produk bahan pertanian
  */
-async function generateDescription({ name, category = 'bahan pertanian', notes = '' }) {
+async function generateDescription({
+  name,
+  category = 'bahan pertanian',
+  notes = '',
+}) {
   if (!name || name.trim() === '') {
-    throw new Error('Nama produk wajib diisi sebelum generate deskripsi AI');
+    throw new Error(
+      'Nama produk wajib diisi sebelum generate deskripsi AI'
+    );
   }
 
   const ai = getClient();
+
   const prompt = `Kamu adalah pakar pertanian dan copywriter profesional untuk toko bahan pertanian "Tani Makmur".
 Buatlah deskripsi produk yang informatif, menarik, dan bermanfaat bagi petani/pembeli untuk produk berikut:
 
@@ -55,13 +64,91 @@ Panduan Penulisan:
   });
 
   if (!response || !response.text) {
-    throw new Error('Tidak ada respon teks yang dihasilkan oleh Gemini AI');
+    throw new Error(
+      'Tidak ada respon teks yang dihasilkan oleh Gemini AI'
+    );
   }
 
   return response.text.trim();
 }
 
+/**
+ * M2: Generate 3 rekomendasi caption berita
+ */
+async function generateCaption(title, content) {
+  if (!title || !content) {
+    throw new Error('Judul dan isi berita wajib diisi');
+  }
+
+  const ai = getClient();
+
+  const prompt = `
+Kamu adalah AI assistant untuk website toko bahan pertanian bernama Tani Makmur.
+Tugas kamu adalah membuat 3 pilihan caption untuk sebuah berita pertanian.
+
+Judul berita:
+${title}
+
+Isi berita:
+${content}
+
+Ketentuan:
+- Gunakan bahasa Indonesia.
+- Caption harus menarik, singkat, dan mudah dipahami.
+- Caption harus relevan dengan isi berita.
+- Cocok digunakan untuk website berita pertanian.
+- Jangan membuat informasi yang tidak terdapat dalam berita.
+- Setiap pilihan caption harus berbeda.
+- Jangan gunakan tanda kutip pada awal atau akhir caption.
+- Hanya kembalikan JSON array yang berisi 3 string caption.
+`;
+
+  const response = await ai.models.generateContent({
+    model: config.geminiModel,
+    contents: prompt,
+    config: {
+      responseMimeType: 'application/json',
+      responseJsonSchema: {
+        type: 'array',
+        items: {
+          type: 'string',
+        },
+      },
+    },
+  });
+
+  if (!response || !response.text) {
+    throw new Error('Gemini tidak memberikan hasil');
+  }
+
+  let captions;
+
+  try {
+    captions = JSON.parse(response.text);
+  } catch (error) {
+    console.error('Response Gemini:', response.text);
+    throw new Error('Format response dari Gemini tidak valid');
+  }
+
+  if (!Array.isArray(captions)) {
+    throw new Error('Response Gemini bukan berupa array caption');
+  }
+
+  captions = captions
+    .filter((caption) => typeof caption === 'string')
+    .map((caption) => caption.trim())
+    .filter((caption) => caption.length > 0)
+    .slice(0, 3);
+
+  if (captions.length === 0) {
+    throw new Error('Gemini tidak menghasilkan caption');
+  }
+
+  return captions;
+}
+
 module.exports = {
   getClient,
   generateDescription,
+  generateCaption,
 };
