@@ -1,0 +1,21 @@
+{
+  "name": "pdw-app",
+  "version": "1.0.0",
+  "description": "Template fullstack Express + SQLite + HTML/Bootstrap buat PDW - tinggal npm run dev",
+  "main": "app.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "seed": "node seeders/seed.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "sequelize": "^6.37.3",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
