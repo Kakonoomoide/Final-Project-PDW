@@ -10,64 +10,67 @@ caption, deskripsi, konsultasi, dan deteksi hama/penyakit lewat foto).
 
 ## 2. Tech Stack
 
-| Layer | Teknologi |
-|---|---|
-| Backend | Express.js |
-| Database | SQLite (lewat Sequelize) |
-| Views | HTML biasa + Bootstrap 5 (CDN) |
+| Layer          | Teknologi                      |
+| -------------- | ------------------------------ |
+| Backend        | Express.js                     |
+| Database       | SQLite (lewat Sequelize)       |
+| Views          | HTML biasa + Bootstrap 5 (CDN) |
 | Client-side JS | Vanilla JavaScript (fetch API) |
-| AI | Gemini API (`@google/genai`) |
-| Auth | express-session + bcrypt |
+| AI             | Gemini API (`@google/genai`)   |
+| Auth           | express-session + bcrypt       |
 
 ## 3. Pembagian Kerja
 
-| # | Fitur | Penanggung Jawab |
-|---|---|---|
-| 1 | Login admin & register user biasa | Instruktur |
-| 2 | Struktur database | Instruktur |
-| 3 | Navbar & sidebar (admin + user) | Instruktur |
-| 4 | Landing page user + widget cuaca & AI rekomendasi waktu tanam | Mahasiswa 1 |
-| 5 | CRUD News (admin) + AI rekomendasi caption | Mahasiswa 2 |
-| 6 | Browse bahan pertanian (user) + AI product finder (quiz) | Mahasiswa 3 |
-| 7 | CRUD bahan pertanian (admin) + AI rekomendasi deskripsi | Mahasiswa 4 |
-| 8 | Chat AI konsultasi pertanian + deteksi hama/penyakit via foto | Mahasiswa 5 |
+| #   | Fitur                                                         | Penanggung Jawab                                           |
+| --- | ------------------------------------------------------------- | ---------------------------------------------------------- |
+| 1   | Login admin & register user biasa                             | Instruktur                                                 |
+| 2   | Struktur database                                             | Instruktur                                                 |
+| 3   | Navbar & sidebar (admin + user)                               | Instruktur                                                 |
+| 4   | Landing page user + widget cuaca & AI rekomendasi waktu tanam | M1 [4D1FK4](https://github.com/4D1FK4)                     |
+| 5   | CRUD News (admin) + AI rekomendasi caption                    | M2 [nabilaghnaaa](https://github.com/nabilaghnaaa)         |
+| 6   | Browse bahan pertanian (user) + AI product finder (quiz)      | M3 [variannn340](https://github.com/variannn340)           |
+| 7   | CRUD bahan pertanian (admin) + AI rekomendasi deskripsi       | M4 [Dhandha Dendriya](https://github.com/DhandhaDendriyaE) |
+| 8   | Chat AI konsultasi pertanian + deteksi hama/penyakit via foto | M5 [PannnTastic](https://github.com/PannnTastic)           |
 
 ## 4. Struktur Database
 
 ### Tabel `users`
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | INTEGER (PK) | auto increment |
-| name | STRING | |
-| email | STRING | unique |
-| password | STRING | hash (bcrypt) |
-| role | STRING | `'user'` atau `'admin'`, default `'user'` |
+
+| Kolom    | Tipe         | Keterangan                                |
+| -------- | ------------ | ----------------------------------------- |
+| id       | INTEGER (PK) | auto increment                            |
+| name     | STRING       |                                           |
+| email    | STRING       | unique                                    |
+| password | STRING       | hash (bcrypt)                             |
+| role     | STRING       | `'user'` atau `'admin'`, default `'user'` |
 
 Admin **tidak bisa didaftarkan lewat form publik** — cuma dibuat lewat
 `npm run seed`. Ini prinsip keamanan: akun privileged gak boleh bisa
 didaftarin sembarangan dari luar.
 
 ### Tabel `products` (bahan pertanian)
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | INTEGER (PK) | |
-| name | STRING | |
-| category | STRING | contoh: `bibit`, `pupuk`, `alat` |
-| description | TEXT | diisi manual atau dibantu AI (M4) |
-| price | INTEGER | |
-| stock | INTEGER | |
-| imageUrl | STRING | opsional |
-| createdBy | INTEGER (FK → users.id) | admin yang nambahin |
+
+| Kolom       | Tipe                    | Keterangan                        |
+| ----------- | ----------------------- | --------------------------------- |
+| id          | INTEGER (PK)            |                                   |
+| name        | STRING                  |                                   |
+| category    | STRING                  | contoh: `bibit`, `pupuk`, `alat`  |
+| description | TEXT                    | diisi manual atau dibantu AI (M4) |
+| price       | INTEGER                 |                                   |
+| stock       | INTEGER                 |                                   |
+| imageUrl    | STRING                  | opsional                          |
+| createdBy   | INTEGER (FK → users.id) | admin yang nambahin               |
 
 ### Tabel `news`
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| id | INTEGER (PK) | |
-| title | STRING | |
-| caption | STRING | ringkasan pendek, bisa dibantu AI (M2) |
-| content | TEXT | isi lengkap |
-| imageUrl | STRING | opsional |
-| createdBy | INTEGER (FK → users.id) | admin yang nambahin |
+
+| Kolom     | Tipe                    | Keterangan                             |
+| --------- | ----------------------- | -------------------------------------- |
+| id        | INTEGER (PK)            |                                        |
+| title     | STRING                  |                                        |
+| caption   | STRING                  | ringkasan pendek, bisa dibantu AI (M2) |
+| content   | TEXT                    | isi lengkap                            |
+| imageUrl  | STRING                  | opsional                               |
+| createdBy | INTEGER (FK → users.id) | admin yang nambahin                    |
 
 > **Catatan buat M1, M3, M5**: kalau butuh tabel tambahan (misal riwayat
 > chat, hasil deteksi foto), silakan tambah model baru sendiri di
@@ -76,6 +79,7 @@ didaftarin sembarangan dari luar.
 ## 5. Rincian Fitur per Mahasiswa
 
 ### M1 — Landing Page + Rekomendasi Waktu Tanam
+
 - Landing page nampilin daftar berita terbaru (`GET /api/news`, dari M2)
 - Widget cuaca (integrasi API cuaca eksternal, misal OpenWeatherMap)
 - AI (Gemini, text generation) narasiin rekomendasi waktu/jenis tanam
@@ -83,24 +87,28 @@ didaftarin sembarangan dari luar.
 - File: `views/user/landing.html`
 
 ### M2 — CRUD News + AI Caption
+
 - CRUD berita di admin (create, read, update, delete)
 - Tombol "Generate Caption dengan AI" — kirim judul/isi berita ke
   Gemini, dapetin beberapa opsi caption
 - File: `views/admin/news.html`
 
 ### M3 — Browse Bahan Pertanian + AI Product Finder
+
 - User bisa liat & filter katalog produk (`GET /api/products`, dari M4)
 - Quiz singkat (2-3 pertanyaan) → AI kasih rekomendasi kategori/produk
   yang cocok berdasarkan jawaban
 - File: `views/user/products.html`
 
 ### M4 — CRUD Bahan Pertanian + AI Deskripsi
+
 - CRUD produk di admin
 - Tombol "Generate Deskripsi dengan AI" — kirim nama+kategori produk
   ke Gemini, dapetin draft deskripsi
 - File: `views/admin/products.html`
 
 ### M5 — Chat AI Konsultasi + Deteksi Hama/Penyakit
+
 - Chat multi-turn seputar pertanian (pola sama kayak project
   `cs-bot-api`/`telegram-shop-bot` - system instruction + riwayat chat)
 - Upload foto tanaman → Gemini Vision analisa & kasih diagnosis +
@@ -129,6 +137,7 @@ didaftarin sembarangan dari luar.
 ## 8. Environment Variables
 
 Lihat `.env.example` buat daftar lengkap. Yang penting:
+
 - `GEMINI_API_KEY` — dipake SEMUA fitur AI (M1, M2, M3, M4, M5),
   satu key yang sama buat semua
 - `WEATHER_API_KEY` — khusus M1
@@ -138,6 +147,7 @@ Lihat `.env.example` buat daftar lengkap. Yang penting:
 ## 9. Definition of Done (per fitur mahasiswa)
 
 Sebuah fitur dianggap selesai kalau:
+
 1. Placeholder `<h1>` di file HTML terkait udah diganti UI beneran
 2. Endpoint API yang dibutuhin (kalau ada) udah dibikin di
    `routes/` + `controllers/` + `services/`, ngikutin pola yang
