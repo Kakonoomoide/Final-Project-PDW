@@ -9,6 +9,8 @@ const authRoutes = require('./routes/auth.routes');
 const pageRoutes = require('./routes/page.routes');
 const adminPageRoutes = require('./routes/admin.page.routes');
 
+const newsRoutes = require('./routes/news.routes');
+
 const app = express();
 
 app.use(express.json());
@@ -24,6 +26,7 @@ app.use(
 );
 
 app.use('/api/auth', authRoutes);
+app.use('/api/news', newsRoutes);
 app.use('/admin', adminPageRoutes);
 app.use('/', pageRoutes);
 
