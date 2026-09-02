@@ -1,0 +1,24 @@
+{
+  "name": "final-project-pdw",
+  "version": "1.0.0",
+  "description": "Final Project PDW - Toko Bahan Pertanian. Express + SQLite + HTML/Bootstrap + Gemini AI",
+  "main": "app.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "seed": "node seeders/seed.js"
+  },
+  "dependencies": {
+    "@google/genai": "^2.20.0",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "sequelize": "^6.37.3",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}

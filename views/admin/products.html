@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kelola Bahan Pertanian - Tani Makmur</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  
+  <style>
+    body {
+      background-color: #f8fafc;
+      min-height: 100vh;
+      color: #334155;
+    }
+    .card-stat {
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      border-radius: 12px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-stat:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    }
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+    }
+    .table-card {
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+    .ai-box {
+      background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%);
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+    }
+    .btn-ai {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+      transition: all 0.2s ease;
+    }
+    .btn-ai:hover {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(16, 185, 129, 0.35);
+    }
+    .btn-ai:active {
+      transform: translateY(0);
+    }
+    .table > :not(caption) > * > * {
+      padding: 0.85rem 0.85rem;
+    }
+    .table-hover tbody tr:hover {
+      background-color: #f1f5f9;
+    }
+    .product-img-thumb {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .cursor-pointer {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;"></div>
+
+  <!-- Navbar Admin Partial -->
+  <div data-include="/partials/navbar-admin.html"></div>
+
+  <div class="d-flex">
+    <!-- Sidebar Admin Partial -->
+    <div data-include="/partials/sidebar-admin.html"></div>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow-1 p-4" style="min-width: 0; background-color: #f8fafc;">
+      
+      <!-- Page Header -->
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <h2 class="h3 fw-bold mb-0 text-dark">🌱 Kelola Bahan Pertanian</h2>
+            <span class="badge bg-success-subtle text-success border border-success-subtle">M4 Jobdesk</span>
+          </div>
+          <p class="text-muted mb-0 small mt-1">
+            Manajemen data bibit, pupuk, alat pertanian, dan pembuatan deskripsi otomatis menggunakan Gemini AI.
+          </p>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 shadow-sm" id="btn-refresh" title="Refresh Data">
+            <i class="bi bi-arrow-clockwise"></i>
+            <span>Refresh</span>
+          </button>
+          <button type="button" class="btn btn-success d-flex align-items-center gap-2 shadow-sm" id="btn-add-product">
+            <i class="bi bi-plus-lg"></i>
+            <span class="fw-semibold">Tambah Produk</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Overview Stats Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card card-stat bg-white h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted small fw-medium text-uppercase">Total Produk</span>
+                <h3 class="fw-bold mb-0 mt-1 text-dark" id="stat-total-products">-</h3>
+              </div>
+              <div class="stat-icon bg-success-subtle text-success">
+                <i class="bi bi-boxes fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card card-stat bg-white h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted small fw-medium text-uppercase">Total Stok Bahan</span>
+                <h3 class="fw-bold mb-0 mt-1 text-dark" id="stat-total-stock">-</h3>
+              </div>
+              <div class="stat-icon bg-primary-subtle text-primary">
+                <i class="bi bi-stack fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card card-stat bg-white h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted small fw-medium text-uppercase">Stok Bibit</span>
+                <h3 class="fw-bold mb-0 mt-1 text-dark" id="stat-total-bibit">-</h3>
+              </div>
+              <div class="stat-icon bg-info-subtle text-info">
+                <i class="bi bi-flower1 fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card card-stat bg-white h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted small fw-medium text-uppercase">Stok Pupuk</span>
+                <h3 class="fw-bold mb-0 mt-1 text-dark" id="stat-total-pupuk">-</h3>
+              </div>
+              <div class="stat-icon bg-warning-subtle text-warning">
+                <i class="bi bi-droplet-half fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Table Card -->
+      <div class="card table-card bg-white">
+        <!-- Filter & Search Toolbar -->
+        <div class="card-header bg-white border-bottom py-3">
+          <div class="row g-2 align-items-center">
+            <!-- Search Input -->
+            <div class="col-12 col-md-4">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" id="filter-search" class="form-control bg-light border-start-0" placeholder="Cari nama atau deskripsi produk..." />
+              </div>
+            </div>
+
+            <!-- Filter Category -->
+            <div class="col-6 col-md-3">
+              <select id="filter-category" class="form-select form-select-sm">
+                <option value="all">Semua Kategori</option>
+                <option value="bibit">Bibit</option>
+                <option value="pupuk">Pupuk</option>
+                <option value="alat">Alat Pertanian</option>
+                <option value="pestisida">Pestisida</option>
+              </select>
+            </div>
+
+            <!-- Sort By -->
+            <div class="col-6 col-md-3">
+              <select id="filter-sort" class="form-select form-select-sm">
+                <option value="createdAt">Urut: Terbaru</option>
+                <option value="name">Urut: Nama Produk</option>
+                <option value="price">Urut: Harga</option>
+                <option value="stock">Urut: Stok</option>
+              </select>
+            </div>
+
+            <!-- Sort Direction -->
+            <div class="col-12 col-md-2 d-flex justify-content-between align-items-center">
+              <select id="filter-order" class="form-select form-select-sm w-auto">
+                <option value="DESC">Desc (Z-A / Max)</option>
+                <option value="ASC">Asc (A-Z / Min)</option>
+              </select>
+              <span class="badge bg-secondary-subtle text-secondary ms-2" id="product-count-badge">0 produk</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Body Container -->
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light text-muted small text-uppercase">
+              <tr>
+                <th scope="col" class="text-center" style="width: 50px;">No</th>
+                <th scope="col" style="min-width: 250px;">Bahan Pertanian</th>
+                <th scope="col" style="width: 130px;">Kategori</th>
+                <th scope="col" style="width: 140px;">Harga</th>
+                <th scope="col" style="width: 130px;">Stok</th>
+                <th scope="col" style="width: 160px;">Pengelola</th>
+                <th scope="col" class="text-center" style="width: 120px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="products-table-body">
+              <!-- Loaded via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="products-loading" class="text-center py-5">
+          <div class="spinner-border text-success" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="text-muted small mt-2 mb-0">Memuat data bahan pertanian...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="products-empty" class="text-center py-5 d-none">
+          <div class="mb-3">
+            <i class="bi bi-inbox text-muted display-4"></i>
+          </div>
+          <h5 class="fw-bold text-dark">Belum ada bahan pertanian</h5>
+          <p class="text-muted small mb-3">Tidak ada produk yang cocok dengan pencarian atau filter yang dipilih.</p>
+          <button type="button" class="btn btn-outline-success btn-sm" onclick="openCreateModal()">
+            <i class="bi bi-plus-lg me-1"></i>Tambah Bahan Pertanian Pertama
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: Tambah & Edit Produk (CRUD + AI Deskripsi) -->
+  <!-- ========================================================================= -->
+  <div class="modal fade" id="modal-product" tabindex="-1" aria-labelledby="modal-product-title" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow">
+        <form id="product-form">
+          <div class="modal-header bg-light border-bottom">
+            <h5 class="modal-title fw-bold" id="modal-product-title">
+              <i class="bi bi-plus-circle-fill text-success me-2"></i>Tambah Bahan Pertanian Baru
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+
+          <div class="modal-body p-4">
+            <input type="hidden" id="product-id" />
+
+            <!-- Row 1: Nama & Kategori -->
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-8">
+                <label for="product-name" class="form-label fw-semibold small">Nama Produk <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="product-name" placeholder="Contoh: Pupuk NPK Mutiara 16-16-16 / Benih Padi Ciherang" required />
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="product-category" class="form-label fw-semibold small">Kategori <span class="text-danger">*</span></label>
+                <select class="form-select" id="product-category" required>
+                  <option value="bibit">Bibit (Benih Tanaman)</option>
+                  <option value="pupuk">Pupuk (Organik / Kimia)</option>
+                  <option value="alat">Alat Pertanian</option>
+                  <option value="pestisida">Pestisida & Obat Hama</option>
+                  <option value="lainnya">Lainnya</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Row 2: Harga & Stok -->
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-6">
+                <label for="product-price" class="form-label fw-semibold small">Harga Satuan (Rp) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light">Rp</span>
+                  <input type="number" class="form-control" id="product-price" min="0" placeholder="0" required />
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="product-stock" class="form-label fw-semibold small">Jumlah Stok <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="product-stock" min="0" placeholder="0" required />
+                  <span class="input-group-text bg-light">Unit / Pcs</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 3: Gambar Produk -->
+            <div class="mb-3">
+              <label for="product-image-url" class="form-label fw-semibold small">URL Gambar Produk (Opsional)</label>
+              <input type="url" class="form-control" id="product-image-url" placeholder="https://example.com/foto-produk.jpg" />
+              
+              <!-- Thumbnail Preview -->
+              <div id="product-image-preview-container" class="mt-2 d-none d-flex align-items-center gap-2 p-2 bg-light rounded border">
+                <img id="product-image-preview" src="" alt="Preview" class="product-img-thumb border" />
+                <span class="small text-muted">Preview Thumbnail Gambar</span>
+              </div>
+            </div>
+
+            <!-- Section Fitur AI Deskripsi (Gemini) -->
+            <div class="ai-box p-3 mb-3">
+              <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-success text-white px-2 py-1"><i class="bi bi-stars me-1"></i>Gemini AI</span>
+                  <span class="fw-bold small text-dark">Rekomendasi Deskripsi Otomatis</span>
+                </div>
+                <button type="button" class="btn btn-ai btn-sm fw-semibold d-flex align-items-center justify-content-center gap-1" id="btn-generate-ai">
+                  <i class="bi bi-magic"></i>
+                  <span>✨ Generate Deskripsi AI</span>
+                </button>
+              </div>
+              <p class="text-muted small mb-2">
+                Klik tombol di atas untuk membuat rancangan deskripsi produk, keunggulan, serta panduan pengaplikasian secara otomatis berdasarkan Nama dan Kategori produk.
+              </p>
+
+              <!-- Optional collapse for additional AI instructions -->
+              <div class="mb-2">
+                <a class="text-decoration-none small fw-semibold text-success d-inline-flex align-items-center gap-1" data-bs-toggle="collapse" href="#ai-notes-collapse" role="button" aria-expanded="false" aria-controls="ai-notes-collapse">
+                  <i class="bi bi-plus-circle"></i> Tambah Instruksi / Catatan Khusus untuk AI (Opsional)
+                </a>
+                <div class="collapse mt-2" id="ai-notes-collapse">
+                  <input type="text" id="ai-extra-notes" class="form-control form-control-sm" placeholder="Contoh: Fokus keunggulan organik, cocok untuk tanaman padi & jagung, dosis 2 tutup botol/tangki" />
+                </div>
+              </div>
+
+              <!-- AI Status Loading Bar -->
+              <div id="ai-status-box" class="alert alert-success d-flex align-items-center gap-2 py-2 px-3 mb-0 d-none">
+                <span class="spinner-border spinner-border-sm text-success" role="status"></span>
+                <span id="ai-status-text" class="small fw-semibold text-success">Sedang memproses dengan Gemini AI...</span>
+              </div>
+            </div>
+
+            <!-- Textarea Deskripsi Produk -->
+            <div class="mb-2">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="product-description" class="form-label fw-semibold small mb-0">Deskripsi Lengkap Produk</label>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-link text-secondary btn-sm p-0 text-decoration-none small" id="btn-copy-desc" title="Salin Teks">
+                    <i class="bi bi-clipboard me-1"></i>Salin
+                  </button>
+                  <button type="button" class="btn btn-link text-danger btn-sm p-0 text-decoration-none small" id="btn-clear-desc" title="Kosongkan Teks">
+                    <i class="bi bi-x-circle me-1"></i>Bersihkan
+                  </button>
+                </div>
+              </div>
+              <textarea class="form-control" id="product-description" rows="5" placeholder="Tuliskan deskripsi produk manual atau buat secara instan menggunakan tombol AI di atas..."></textarea>
+              <div class="form-text small">Deskripsi dapat diedit kembali sebelum disimpan ke database.</div>
+            </div>
+
+          </div>
+
+          <div class="modal-footer bg-light border-top py-2">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-success fw-semibold" id="btn-save-product">
+              <i class="bi bi-check2-circle me-1"></i>Simpan Produk
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: Detail / Preview Produk -->
+  <!-- ========================================================================= -->
+  <div class="modal fade" id="modal-view-product" tabindex="-1" aria-labelledby="modal-view-product-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-light border-bottom">
+          <h5 class="modal-title fw-bold" id="modal-view-product-title">
+            <i class="bi bi-info-circle-fill text-info me-2"></i>Detail Bahan Pertanian
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="text-center mb-3">
+            <img id="view-product-image" src="" alt="Foto Produk" class="img-fluid rounded border shadow-sm" style="max-height: 220px; object-fit: cover; width: 100%;" />
+          </div>
+
+          <h4 class="fw-bold text-dark mb-1" id="view-product-name">-</h4>
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span id="view-product-category"></span>
+            <span id="view-product-stock"></span>
+          </div>
+
+          <div class="bg-light p-3 rounded mb-3 border">
+            <span class="text-muted small d-block">Harga Satuan</span>
+            <span class="fs-4 fw-bold text-success" id="view-product-price">Rp 0</span>
+          </div>
+
+          <div class="mb-3">
+            <span class="fw-semibold small text-muted text-uppercase d-block mb-1">Deskripsi & Petunjuk:</span>
+            <div class="p-3 bg-white border rounded small text-secondary" id="view-product-description" style="max-height: 200px; overflow-y: auto; line-height: 1.6;">
+              -
+            </div>
+          </div>
+
+          <div class="border-top pt-2 mt-3 small text-muted d-flex justify-content-between">
+            <span>Dibuat oleh: <strong id="view-product-creator" class="text-dark">-</strong></span>
+            <span id="view-product-date">-</span>
+          </div>
+        </div>
+        <div class="modal-footer bg-light border-top py-2">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: Konfirmasi Hapus Produk -->
+  <!-- ========================================================================= -->
+  <div class="modal fade" id="modal-delete-product" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-body text-center p-4">
+          <div class="text-danger mb-3">
+            <i class="bi bi-exclamation-triangle-fill display-4"></i>
+          </div>
+          <h5 class="fw-bold mb-2">Hapus Produk?</h5>
+          <p class="text-muted small mb-4">
+            Apakah Anda yakin ingin menghapus <strong id="delete-product-name" class="text-dark">produk ini</strong>? Data yang sudah dihapus tidak dapat dikembalikan.
+          </p>
+          <div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-light btn-sm px-3" data-bs-dismiss="modal">Batal</button>
+            <button type="button" class="btn btn-danger btn-sm px-3 fw-semibold" id="btn-confirm-delete">
+              <i class="bi bi-trash me-1"></i>Hapus
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- App JS & Partials -->
+  <script src="/js/include-partials.js"></script>
+  <script src="/js/navbar-auth.js"></script>
+  <script src="/js/admin-products.js"></script>
+</body>
+</html>
