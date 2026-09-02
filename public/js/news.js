@@ -62,7 +62,7 @@ function renderNews() {
             : news.content || '-'
         )}
       </td>
-      <td>
+      <td class="text-center align-middle">
         ${
           news.imageUrl
             ? `
@@ -79,7 +79,7 @@ function renderNews() {
             : '-'
         }
       </td>
-      <td>
+      <td class="text-center align-middle">
         <button
           class="btn btn-sm btn-warning me-1"
           onclick="openEditModal(${news.id})"
