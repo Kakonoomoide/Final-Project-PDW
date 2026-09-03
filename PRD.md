@@ -1,157 +1,402 @@
-# PRD — Tani Makmur (Final Project PDW)
+# PRD — TrAvelIt (Final Project PDW)
+
+**Perencana Rute Wisata Kustom berbasis AI**
 
 ## 1. Latar Belakang
 
-Aplikasi web toko bahan pertanian sederhana. Admin mengelola berita
-seputar pertanian dan katalog bahan pertanian (bibit, pupuk, alat).
-User biasa bisa baca berita, browse produk, dan konsultasi seputar
-pertanian lewat chat AI. Beberapa fitur dibantu Gemini AI (rekomendasi
-caption, deskripsi, konsultasi, dan deteksi hama/penyakit lewat foto).
+Perencanaan wisata masih terfragmentasi. Untuk menyusun satu perjalanan,
+orang berpindah-pindah antara blog, peta, situs harga, dan ulasan —
+lalu menggabungkannya sendiri di kepala. Tiga masalah yang muncul:
 
-## 2. Tech Stack
+1. **Informasi tersebar.** Tidak ada satu tempat yang menggabungkan
+   tempat, jarak, biaya, dan jadwal sekaligus.
+2. **Rencana tidak konsisten.** Waktu tempuh, budget, dan jam kunjungan
+   sering tidak selaras — jadwal yang terlihat rapi di catatan ternyata
+   mustahil dijalani.
+3. **Beban keputusan tinggi.** Semakin banyak pilihan, semakin sulit
+   menyusun urutan yang masuk akal.
 
-| Layer          | Teknologi                      |
-| -------------- | ------------------------------ |
-| Backend        | Express.js                     |
-| Database       | SQLite (lewat Sequelize)       |
-| Views          | HTML biasa + Bootstrap 5 (CDN) |
+**Tesis rancangan:** satu formulir perjalanan harus menghasilkan
+itinerary harian, estimasi biaya, dan rute peta — lalu menyimpannya agar
+dapat diedit atau dibuat ulang.
+
+TrAvelIt adalah aplikasi web yang mengubah tujuan, durasi, anggaran, dan
+minat menjadi itinerary harian yang terstruktur dan dapat dipetakan.
+
+## 2. Landasan Akademik
+
+**Key paper:**
+
+> Kotari, V. S., Soujanya A., Veenashree, Chabbi, T., & Shwethasree R.
+> (2025). *AI-Powered Travel Itinerary Planner Using Next.js, TypeScript,
+> Convex, and LLM Integration*. IJISRT, 10(11), 1157–1162.
+> https://doi.org/10.38124/ijisrt/25nov927
+
+Tiga temuan yang dipakai:
+
+| # | Temuan | Penerapan di TrAvelIt |
+| --- | --- | --- |
+| 1 | **Input personal** — tujuan, durasi, budget, dan minat menjadi konteks generasi | Formulir di `/planner`, disimpan di tabel `trips` + `preferences` |
+| 2 | **Output terstruktur** — aktivitas per hari, deskripsi tempat, waktu tempuh, koordinat, rute | Kontrak JSON di `services/itinerarySchema.js`, disimpan berjenjang di `itineraries` → `itinerary_days` → `activities` |
+| 3 | **Arsitektur modern** — frontend, backend, autentikasi, LLM, peta interaktif | Express + session auth + Gemini + Leaflet |
+
+### Adaptasi stack
+
+Paper aslinya memakai Next.js + TypeScript + Convex + PostgreSQL +
+Google Maps. Paper itu sendiri sudah mencontohkan penggantian komponen
+("Convex diganti Node.js/Express + PostgreSQL, sementara pola
+Next.js–LLM–peta dipertahankan"), dan adaptasi itu diteruskan di sini
+agar cocok dengan stack mata kuliah:
+
+| Paper | TrAvelIt | Alasan |
+| --- | --- | --- |
+| Next.js + TypeScript | HTML + Bootstrap 5 + vanilla JS | Stack mata kuliah |
+| Convex | Express + Sequelize | Stack mata kuliah |
+| PostgreSQL | SQLite | Stack mata kuliah; relasi & versioning tetap sama |
+| Google Maps / Routes API | Leaflet + OpenStreetMap + Nominatim | Gratis, tanpa API key dan tanpa kartu kredit |
+| LLM (generik) | Gemini (`@google/genai`) | Sudah dipakai seluruh modul M1–M5 |
+
+**Pola inti yang dipertahankan:** input personal → output JSON
+terstruktur → arsitektur berlapis dengan peta interaktif.
+
+## 3. Tech Stack
+
+| Layer | Teknologi |
+| --- | --- |
+| Backend | Express.js |
+| Database | SQLite (lewat Sequelize) |
+| Views | HTML biasa + Bootstrap 5 (CDN) |
 | Client-side JS | Vanilla JavaScript (fetch API) |
-| AI             | Gemini API (`@google/genai`)   |
-| Auth           | express-session + bcrypt       |
+| AI | Gemini API (`@google/genai`) |
+| Peta | Leaflet 1.9.4 (CDN) + tile OpenStreetMap |
+| Geocoding | Nominatim (OpenStreetMap), tanpa API key |
+| Geolocation | `navigator.geolocation` bawaan browser |
+| Auth | express-session + bcrypt |
+| Test | `node:test` (bawaan Node 18+, tanpa dependency) |
 
-## 3. Pembagian Kerja
+## 4. Pembagian Kerja
 
-| #   | Fitur                                                         | Penanggung Jawab                                           |
-| --- | ------------------------------------------------------------- | ---------------------------------------------------------- |
-| 1   | Login admin & register user biasa                             | Instruktur                                                 |
-| 2   | Struktur database                                             | Instruktur                                                 |
-| 3   | Navbar & sidebar (admin + user)                               | Instruktur                                                 |
-| 4   | Landing page user + widget cuaca & AI rekomendasi waktu tanam | M1 [4D1FK4](https://github.com/4D1FK4)                     |
-| 5   | CRUD News (admin) + AI rekomendasi caption                    | M2 [nabilaghnaaa](https://github.com/nabilaghnaaa)         |
-| 6   | Browse bahan pertanian (user) + AI product finder (quiz)      | M3 [variannn340](https://github.com/variannn340)           |
-| 7   | CRUD bahan pertanian (admin) + AI rekomendasi deskripsi       | M4 [Dhandha Dendriya](https://github.com/DhandhaDendriyaE) |
-| 8   | Chat AI konsultasi pertanian + deteksi hama/penyakit via foto | M5 [PannnTastic](https://github.com/PannnTastic)           |
+| # | Fitur | Penanggung Jawab |
+| --- | --- | --- |
+| 1 | Login admin & register user biasa | Instruktur |
+| 2 | Struktur database | Instruktur |
+| 3 | Navbar & sidebar (admin + user) | Instruktur |
+| 4 | Landing page user + widget cuaca kota tujuan & AI rekomendasi waktu berkunjung | M1 [4D1FK4](https://github.com/4D1FK4) |
+| 5 | CRUD Artikel wisata (admin) + AI rekomendasi caption | M2 [nabilaghnaaa](https://github.com/nabilaghnaaa) |
+| 6 | Browse destinasi (user) + AI destination finder (quiz) | M3 [variannn340](https://github.com/variannn340) |
+| 7 | CRUD Destinasi (admin) + AI rekomendasi deskripsi | M4 [Dhandha Dendriya](https://github.com/DhandhaDendriyaE) |
+| 8 | **Perencana rute wisata** (itinerary + peta + geolocation) + asisten perjalanan + identifikasi tempat via foto | M5 [PannnTastic](https://github.com/PannnTastic) |
 
-## 4. Struktur Database
+## 5. Kebutuhan Fungsional
+
+Mengikuti alur sistem:
+
+| INPUT | PROSES | OUTPUT |
+| --- | --- | --- |
+| Registrasi dan login | Validasi input | Jadwal aktivitas per hari |
+| Tujuan, tanggal/durasi, budget | Generate itinerary melalui LLM | Estimasi biaya dan peta |
+| Jumlah wisatawan dan minat | Hitung koordinat, jarak, dan rute | Simpan, riwayat, edit, regenerate |
+
+**User journey minimal:**
+
+```
+Login → isi preferensi → generate → lihat itinerary & peta → simpan / regenerate
+```
+
+## 6. Kebutuhan Nonfungsional
+
+| Aspek | Kriteria penerimaan MVP | Cara dipenuhi |
+| --- | --- | --- |
+| Keamanan | API key hanya di server; password di-hash; akses trip dibatasi ke pemilik | `GEMINI_API_KEY` tidak pernah dikirim ke browser; bcrypt; setiap query `Trip` menyertakan `userId`, trip orang lain dibalas **404** (bukan 403, agar keberadaan ID tidak bocor) |
+| Validasi | Tanggal, budget, durasi, dan respons JSON diperiksa sebelum disimpan | `controllers/trip.controller.js` untuk input; `services/itinerarySchema.js` untuk keluaran AI |
+| Kinerja | Loading state tersedia; proses AI tidak memblokir navigasi | Overlay dengan estimasi waktu jujur (20–60 detik); tombol dikunci selama proses |
+| Keandalan | Timeout, retry terbatas, rate limit, pesan error yang dapat dipahami | `callWithRetry()` untuk 503/429; timeout 8 detik ke Nominatim; retry generate maksimal 2× |
+| Usability | Responsif di desktop/mobile; itinerary dan peta mudah dipindai | Bootstrap 5 grid; accordion per hari; filter peta per hari |
+| Maintainability | Service AI, peta, autentikasi, dan database dipisahkan secara modular | `gemini.service`, `geo.service`, `trip.service`, `auth.service` terpisah; controller tetap tipis |
+
+## 7. Struktur Database
+
+```
+users ──┬── trips ──┬── preferences        (1:1)
+        │           └── itineraries ── itinerary_days ── activities
+        ├── chat_messages
+        ├── destinations   (createdBy)
+        └── articles       (createdBy)
+```
 
 ### Tabel `users`
 
-| Kolom    | Tipe         | Keterangan                                |
-| -------- | ------------ | ----------------------------------------- |
-| id       | INTEGER (PK) | auto increment                            |
-| name     | STRING       |                                           |
-| email    | STRING       | unique                                    |
-| password | STRING       | hash (bcrypt)                             |
-| role     | STRING       | `'user'` atau `'admin'`, default `'user'` |
+| Kolom | Tipe | Keterangan |
+| --- | --- | --- |
+| id | INTEGER (PK) | auto increment |
+| name | STRING | |
+| email | STRING | unique |
+| password | STRING | hash (bcrypt) |
+| role | STRING | `'user'` atau `'admin'`, default `'user'` |
 
-Admin **tidak bisa didaftarkan lewat form publik** — cuma dibuat lewat
-`npm run seed`. Ini prinsip keamanan: akun privileged gak boleh bisa
-didaftarin sembarangan dari luar.
+Admin **tidak bisa didaftarkan lewat form publik** — hanya dibuat lewat
+`npm run seed`. Prinsip keamanan: akun privileged tidak boleh bisa
+didaftarkan sembarangan dari luar.
 
-### Tabel `products` (bahan pertanian)
+### Tabel `trips`
 
-| Kolom       | Tipe                    | Keterangan                        |
-| ----------- | ----------------------- | --------------------------------- |
-| id          | INTEGER (PK)            |                                   |
-| name        | STRING                  |                                   |
-| category    | STRING                  | contoh: `bibit`, `pupuk`, `alat`  |
-| description | TEXT                    | diisi manual atau dibantu AI (M4) |
-| price       | INTEGER                 |                                   |
-| stock       | INTEGER                 |                                   |
-| imageUrl    | STRING                  | opsional                          |
-| createdBy   | INTEGER (FK → users.id) | admin yang nambahin               |
+| Kolom | Tipe | Keterangan |
+| --- | --- | --- |
+| id | INTEGER (PK) | |
+| userId | INTEGER (FK → users.id) | pemilik trip |
+| title | STRING | |
+| destination | STRING | kota/daerah tujuan |
+| originCity | STRING | boleh diisi dari geolocation |
+| startDate / endDate | DATEONLY | |
+| durationDays | INTEGER | inklusif (1–3 Okt = 3 hari) |
+| budget | INTEGER | rupiah, total semua wisatawan |
+| travelerCount | INTEGER | default 1 |
+| status | STRING | `draft` \| `generated` \| `failed` |
+| lastError | STRING | pesan gagal terakhir, biar user bisa "coba lagi" |
 
-### Tabel `news`
+### Tabel `preferences` (1:1 dengan trip)
 
-| Kolom     | Tipe                    | Keterangan                             |
-| --------- | ----------------------- | -------------------------------------- |
-| id        | INTEGER (PK)            |                                        |
-| title     | STRING                  |                                        |
-| caption   | STRING                  | ringkasan pendek, bisa dibantu AI (M2) |
-| content   | TEXT                    | isi lengkap                            |
-| imageUrl  | STRING                  | opsional                               |
-| createdBy | INTEGER (FK → users.id) | admin yang nambahin                    |
+| Kolom | Tipe | Keterangan |
+| --- | --- | --- |
+| id | INTEGER (PK) | |
+| tripId | INTEGER (FK, unique) | |
+| interests | TEXT | JSON array (SQLite tidak punya tipe array) |
+| pace | STRING | `santai` \| `sedang` \| `padat` |
+| specialNeeds | TEXT | opsional |
 
-> **Catatan buat M1, M3, M5**: kalau butuh tabel tambahan (misal riwayat
-> chat, hasil deteksi foto), silakan tambah model baru sendiri di
-> `models/`, ikutin pola yang sama (lihat `models/README.md`).
+### Tabel `itineraries` (versi)
 
-## 5. Rincian Fitur per Mahasiswa
+| Kolom | Tipe | Keterangan |
+| --- | --- | --- |
+| id | INTEGER (PK) | |
+| tripId | INTEGER (FK) | |
+| version | INTEGER | mulai 1, naik tiap regenerate |
+| totalEstimatedCost | INTEGER | |
+| currency | STRING | default `IDR` |
+| modelUsed | STRING | model Gemini saat generate |
+| generatedAt | DATE | |
 
-### M1 — Landing Page + Rekomendasi Waktu Tanam
+> **Aturan konsistensi:** satu itinerary tersimpan sebagai satu versi
+> utuh; regenerate membuat versi baru, **bukan menimpa riwayat**. Versi
+> yang ditampilkan adalah `version` tertinggi.
 
-- Landing page nampilin daftar berita terbaru (`GET /api/news`, dari M2)
-- Widget cuaca (integrasi API cuaca eksternal, misal OpenWeatherMap)
-- AI (Gemini, text generation) narasiin rekomendasi waktu/jenis tanam
-  berdasarkan data cuaca yang didapat
+### Tabel `itinerary_days`
+
+| Kolom | Tipe | Keterangan |
+| --- | --- | --- |
+| id | INTEGER (PK) | |
+| itineraryId | INTEGER (FK) | |
+| dayNumber | INTEGER | 1..n |
+| date | DATEONLY | dihitung server dari `startDate`, bukan dari AI |
+| summary | STRING | judul singkat hari itu |
+
+### Tabel `activities`
+
+| Kolom | Tipe | Keterangan |
+| --- | --- | --- |
+| id | INTEGER (PK) | |
+| itineraryDayId | INTEGER (FK) | |
+| orderNo | INTEGER | urutan dalam satu hari |
+| startTime | STRING | `HH:MM` |
+| name | STRING | |
+| category | STRING | `wisata`\|`kuliner`\|`transport`\|`penginapan`\|`lainnya` |
+| description | TEXT | |
+| estimatedCost | INTEGER | rupiah |
+| lat / lng | FLOAT | boleh null kalau tempatnya tidak ditemukan |
+| placeVerified | BOOLEAN | true kalau ketemu di OpenStreetMap |
+| distanceKmFromPrev | FLOAT | haversine, dihitung server |
+| travelMinutesFromPrev | INTEGER | perkiraan, asumsi 30 km/jam |
+
+### Tabel `destinations` (jatah M3 & M4)
+
+| Kolom | Tipe |
+| --- | --- |
+| id, name, category, city, province, description, ticketPrice, lat, lng, imageUrl, createdBy |
+
+`category`: `pantai`, `gunung`, `budaya`, `kuliner`, `taman`, `lainnya`.
+Kolom `lat`/`lng` ada supaya destinasi bisa langsung diplot di peta
+tanpa geocoding ulang.
+
+### Tabel `articles` (jatah M1 & M2)
+
+| Kolom | Tipe |
+| --- | --- |
+| id, title, caption, content, imageUrl, createdBy |
+
+### Tabel `chat_messages` (M5)
+
+| Kolom | Tipe | Keterangan |
+| --- | --- | --- |
+| id, userId, role, content | | `role`: `user` \| `model` |
+| hasImage | BOOLEAN | penanda baris berasal dari foto |
+
+> **Catatan buat M1–M4:** kalau butuh tabel tambahan, silakan tambah
+> model baru di `models/`, ikuti pola yang sama lalu daftarkan di
+> `models/index.js` (lihat `models/README.md`).
+
+## 8. API
+
+### Sudah tersedia
+
+| Method | Endpoint | Proteksi | Keterangan |
+| --- | --- | --- | --- |
+| POST | `/api/auth/register` | — | selalu jadi role `user` |
+| POST | `/api/auth/login` | — | satu endpoint untuk admin & user |
+| POST | `/api/auth/logout` | — | |
+| GET | `/api/auth/me` | — | dipakai navbar |
+| POST | `/api/trips/generate` | `requireAuth` | buat trip + itinerary versi 1 |
+| GET | `/api/trips` | `requireAuth` | daftar trip milik user |
+| GET | `/api/trips/:id` | `requireAuth` | detail + itinerary terbaru |
+| GET | `/api/trips/:id/versions` | `requireAuth` | daftar versi |
+| PATCH | `/api/trips/:id` | `requireAuth` | ubah data trip |
+| POST | `/api/trips/:id/regenerate` | `requireAuth` | buat versi baru |
+| DELETE | `/api/trips/:id` | `requireAuth` | hapus trip + semua versinya |
+| GET | `/api/geo/reverse?lat=&lng=` | `requireAuth` | koordinat → nama kota |
+| GET | `/api/chat/history` | `requireAuth` | riwayat asisten |
+| POST | `/api/chat` | `requireAuth` | kirim pesan teks |
+| POST | `/api/chat/detect` | `requireAuth` | kirim foto tempat |
+| DELETE | `/api/chat/history` | `requireAuth` | reset obrolan |
+| GET | `/api/admin/stats` | `requireAdmin` | hitungan agregat |
+
+### Belum dibuat (jatah mahasiswa)
+
+| Endpoint | PJ |
+| --- | --- |
+| `/api/articles` (CRUD) | M2 |
+| `/api/destinations` (CRUD) | M4 |
+
+## 9. Rincian Fitur per Mahasiswa
+
+### M1 — Landing Page + Rekomendasi Waktu Berkunjung
+
+- Landing page menampilkan artikel wisata terbaru (`GET /api/articles`, dari M2)
+- Widget cuaca kota tujuan (API cuaca eksternal, misal OpenWeatherMap)
+- AI (Gemini) menarasikan rekomendasi waktu berkunjung berdasarkan data cuaca itu
 - File: `views/user/landing.html`
 
-### M2 — CRUD News + AI Caption
+### M2 — CRUD Artikel + AI Caption
 
-- CRUD berita di admin (create, read, update, delete)
-- Tombol "Generate Caption dengan AI" — kirim judul/isi berita ke
-  Gemini, dapetin beberapa opsi caption
-- File: `views/admin/news.html`
+- CRUD artikel wisata di admin (create, read, update, delete)
+- Tombol "Generate Caption dengan AI" — kirim judul/isi ke Gemini, dapat beberapa opsi
+- File: `views/admin/articles.html`, model `models/article.model.js`
 
-### M3 — Browse Bahan Pertanian + AI Product Finder
+### M3 — Browse Destinasi + AI Destination Finder
 
-- User bisa liat & filter katalog produk (`GET /api/products`, dari M4)
-- Quiz singkat (2-3 pertanyaan) → AI kasih rekomendasi kategori/produk
-  yang cocok berdasarkan jawaban
-- File: `views/user/products.html`
+- User bisa lihat & filter katalog destinasi (`GET /api/destinations`, dari M4)
+- Quiz singkat (2–3 pertanyaan) → AI merekomendasikan kategori/destinasi yang cocok
+- Opsional: tabel `destinations` sudah punya `lat`/`lng`, jadi bisa dipetakan
+  dengan Leaflet (contoh: `public/js/trip-map.js`) dan diurutkan berdasarkan
+  jarak dari user (helper: `public/js/geo-client.js`)
+- File: `views/user/destinations.html`
 
-### M4 — CRUD Bahan Pertanian + AI Deskripsi
+### M4 — CRUD Destinasi + AI Deskripsi
 
-- CRUD produk di admin
-- Tombol "Generate Deskripsi dengan AI" — kirim nama+kategori produk
-  ke Gemini, dapetin draft deskripsi
-- File: `views/admin/products.html`
+- CRUD destinasi di admin
+- Tombol "Generate Deskripsi dengan AI" — kirim nama + kategori + kota ke Gemini
+- Kolom `lat`/`lng` bisa diisi manual atau lewat `geo.geocode()`
+- File: `views/admin/destinations.html`, model `models/destination.model.js`
 
-### M5 — Chat AI Konsultasi + Deteksi Hama/Penyakit
+### M5 — Perencana Rute Wisata + Asisten Perjalanan ✅ SELESAI
 
-- Chat multi-turn seputar pertanian (pola sama kayak project
-  `cs-bot-api`/`telegram-shop-bot` - system instruction + riwayat chat)
-- Upload foto tanaman → Gemini Vision analisa & kasih diagnosis +
-  saran penanganan
-- File: `views/user/chat.html`
+- Form preferensi + tombol geolocation "pakai lokasi saya" (`/planner`)
+- Generate itinerary harian via Gemini JSON, divalidasi sebelum disimpan
+- Verifikasi tiap tempat ke Nominatim, jarak antar aktivitas via haversine
+- Peta Leaflet dengan marker bernomor, polyline, filter per hari,
+  dan marker posisi user (`/trip/:id`)
+- Regenerate menghasilkan versi baru tanpa menghapus versi lama
+- Chat asisten perjalanan multi-turn + identifikasi tempat dari foto (`/chat`)
 
-## 6. Dependency Antar Fitur
+## 10. Alur Integrasi AI & Data
 
-- **M3 butuh data dari M4** (tabel `products`). Struktur tabel udah
-  disepakati di PRD ini dari awal, jadi M3 bisa mulai kerja pake data
-  seed dummy tanpa nunggu M4 kelar CRUD-nya.
-- **M1 butuh data dari M2** (tabel `news`) buat nampilin di landing page.
-- Fitur lain (chat M5, deteksi foto M5, cuaca M1, quiz M3) independen,
-  gak nunggu modul lain.
+### Kontrak output
 
-## 7. Autentikasi & Otorisasi
+```
+destination · totalEstimatedCost · currency · days[] · activities[] · coordinates
+```
 
-- Register (`POST /api/auth/register`) → selalu jadi role `user`
-- Login (`POST /api/auth/login`) → satu endpoint buat admin & user,
-  redirect beda tergantung `role` di response
-- Halaman `/admin/*` diproteksi `requireAdminPage` (redirect ke
-  `/login` kalo bukan admin/belum login)
-- Endpoint API sensitif diproteksi `requireAuth`/`requireAdmin`
-  (balikin JSON 401/403, bukan redirect)
+Gemini dipanggil dengan `responseMimeType: 'application/json'` dan
+`responseSchema` (lihat `services/itinerarySchema.js`), sehingga yang
+kembali adalah JSON — bukan prosa yang kebetulan mirip JSON.
 
-## 8. Environment Variables
+### Validasi sebelum disimpan
 
-Lihat `.env.example` buat daftar lengkap. Yang penting:
+Backend **menolak field wajib yang hilang dan tidak menyimpan JSON
+mentah tanpa normalisasi.** Aturannya dipisah dua:
 
-- `GEMINI_API_KEY` — dipake SEMUA fitur AI (M1, M2, M3, M4, M5),
-  satu key yang sama buat semua
-- `WEATHER_API_KEY` — khusus M1
-- `SESSION_SECRET` — buat login (instruktur)
-- `DB_STORAGE` — path file SQLite (otomatis kebuat)
+| Jenis masalah | Tindakan | Contoh |
+| --- | --- | --- |
+| Membuat itinerary tidak berguna | **TOLAK** | `days` kosong, hari tanpa aktivitas, aktivitas tanpa nama, jumlah hari ≠ durasi trip |
+| Hanya membuat jelek | **BETULKAN** | kategori tak dikenal → `lainnya`, jam ngawur → `null`, koordinat mustahil → `null`, biaya negatif → `0`, `dayNumber` acak → diurutkan `1..n` |
 
-## 9. Definition of Done (per fitur mahasiswa)
+Kalau validasi gagal, prompt diulang **sekali** dengan daftar
+kesalahannya dilampirkan. Kalau masih gagal, trip disimpan dengan
+`status: 'failed'` dan pesan yang bisa dipahami — trip tidak dihapus,
+supaya user bisa menekan "Coba lagi" tanpa mengisi ulang formulir.
+
+### Verifikasi tempat
+
+Mitigasi risiko **tempat halusinatif**: model bahasa bisa menyebut
+tempat yang tidak ada dengan nada sangat yakin.
+
+1. Tiap aktivitas dicari ke Nominatim (`nama, destinasi`)
+2. Ketemu → koordinat dari Nominatim, `placeVerified = true`
+3. Tidak ketemu tapi AI memberi koordinat sah → koordinat AI dipakai,
+   `placeVerified = false`, UI memberi lencana peringatan (marker oranye)
+4. Keduanya gagal → tidak diplot di peta, ditandai di daftar
+
+Aktivitas berkategori `transport` dilewati (bukan tempat yang bisa dicari).
+
+## 11. Peran Admin
+
+Admin diposisikan sebagai **kurator konten**: mengelola katalog destinasi
+(M4) dan artikel wisata (M2), plus dashboard statistik agregat.
+
+Admin **tidak bisa** melihat isi rencana perjalanan pengguna.
+`GET /api/admin/stats` hanya mengembalikan `COUNT`, tidak satu pun query
+yang mengembalikan baris trip. Ini menjaga kriteria nonfungsional
+"akses trip dibatasi ke pemilik".
+
+## 12. Rancangan Implementasi
+
+Empat increment:
+
+| # | Tahap | Isi |
+| --- | --- | --- |
+| 01 | **Fondasi** | Repo, Express, SQLite, Sequelize, autentikasi session |
+| 02 | **Core trip** | Model domain, form preferensi, CRUD trip, riwayat & detail |
+| 03 | **Integrasi** | LLM JSON, Nominatim, Leaflet, perhitungan biaya & jarak |
+| 04 | **Hardening** | Validasi, retry, timeout, responsif, pengujian |
+
+### Risiko utama dan mitigasi
+
+| Risiko | Mitigasi |
+| --- | --- |
+| Tempat halusinatif | Verifikasi geocode ke Nominatim + lencana "belum terverifikasi" (bagian 10) |
+| JSON AI rusak | `responseSchema` + validator + retry; gagal → `status: failed`, bukan data rusak |
+| Estimasi biaya berubah | Ditampilkan sebagai estimasi; `generatedAt` & `modelUsed` disimpan |
+| Rate limit / timeout | Antrian 1 req/detik ke Nominatim, cache, timeout 8 detik; `callWithRetry()` untuk 503/429 Gemini |
+| Data pengguna bocor | API key server-side; otorisasi per trip lewat filter `userId`; balas 404 bukan 403 |
+
+## 13. Environment Variables
+
+Lihat `.env.example` untuk daftar lengkap. Yang penting:
+
+- `GEMINI_API_KEY` — dipakai **semua** fitur AI (M1–M5), satu key untuk satu tim
+- `WEATHER_API_KEY` — khusus M1 (cuaca kota tujuan)
+- `SESSION_SECRET` — untuk login
+- `DB_STORAGE` — path file SQLite (otomatis dibuat)
+- `NOMINATIM_BASE_URL` / `NOMINATIM_USER_AGENT` — **tidak butuh API key**,
+  biasanya tidak perlu diubah
+
+## 14. Definition of Done (per fitur mahasiswa)
 
 Sebuah fitur dianggap selesai kalau:
 
-1. Placeholder `<h1>` di file HTML terkait udah diganti UI beneran
-2. Endpoint API yang dibutuhin (kalau ada) udah dibikin di
-   `routes/` + `controllers/` + `services/`, ngikutin pola yang
-   udah ada (`auth.*`)
-3. Fitur AI (kalau ada) beneran manggil Gemini API, bukan data hardcode
-4. Udah dites manual: jalanin `npm run dev`, buka halaman terkait,
-   pastiin gak ada error di console browser maupun terminal
+1. Placeholder `<h1>` di file HTML terkait sudah diganti UI beneran
+2. Endpoint API yang dibutuhkan sudah dibuat di `routes/` + `controllers/`
+   + `services/`, mengikuti pola yang sudah ada (`auth.*`, `trip.*`)
+3. Fitur AI (kalau ada) benar-benar memanggil Gemini API, bukan data hardcode
+4. Sudah dites manual: jalankan `npm run dev`, buka halaman terkait,
+   pastikan tidak ada error di console browser maupun terminal
+5. Tidak ada string tema lama ("Tani Makmur", istilah pertanian) yang
+   ikut masuk
