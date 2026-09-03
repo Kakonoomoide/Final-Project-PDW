@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rencana Perjalanan - TrAvelIt</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    /* Chip minat: checkbox disembunyiin, label-nya yang jadi tombol */
+    .chip input { position: absolute; opacity: 0; pointer-events: none; }
+    .chip label {
+      cursor: pointer;
+      border: 1px solid #dee2e6;
+      border-radius: 999px;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.875rem;
+      user-select: none;
+    }
+    .chip input:checked + label {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+      color: #fff;
+    }
+    /* Overlay nutupin layar selama generate. Prosesnya makan puluhan
+       detik, jadi harus jelas kalau aplikasinya lagi kerja - bukan hang. */
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.92);
+      z-index: 1080;
+      display: none;
+    }
+    #loading-overlay.tampil { display: flex; }
+  </style>
+</head>
+<body class="bg-light">
+  <div data-include="/partials/navbar-user.html"></div>
+
+  <main class="container py-4">
+    <div class="mb-3">
+      <h1 class="h4 mb-1">🗺️ Rencana Perjalanan</h1>
+      <p class="text-muted small mb-0">
+        Isi tujuan, tanggal, dan budget — AI menyusun jadwal harian lengkap
+        dengan estimasi biaya dan peta.
+      </p>
+    </div>
+
+    <!-- Endpoint trip butuh login (tiap trip punya pemilik), jadi kalo
+         belum login yang ditampilin ajakan login, bukan formnya -->
+    <div class="alert alert-warning d-none" id="need-login">
+      Kamu harus <a href="/login" class="alert-link">login</a> dulu buat bikin
+      rencana perjalanan. Belum punya akun?
+      <a href="/register" class="alert-link">daftar di sini</a>.
+    </div>
+
+    <div class="alert alert-danger d-none" id="planner-error"></div>
+
+    <div class="row g-4 d-none" id="planner-area">
+      <!-- ==================== FORM ==================== -->
+      <div class="col-lg-5">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h2 class="h6 mb-3">Buat rencana baru</h2>
+
+            <form id="planner-form">
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Mau ke mana? <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="destinasi" maxlength="100"
+                       placeholder="Contoh: Yogyakarta" required />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Berangkat dari</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="asal" maxlength="100"
+                         placeholder="Contoh: Surabaya" />
+                  <button class="btn btn-outline-secondary" type="button" id="btn-lokasi"
+                          title="Deteksi kota dari lokasi perangkat">📍</button>
+                </div>
+                <div class="form-text" id="lokasi-status">
+                  Opsional. Klik 📍 buat isi otomatis dari lokasimu.
+                </div>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">Tanggal mulai <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" id="mulai" required />
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">Tanggal selesai <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" id="selesai" required />
+                </div>
+              </div>
+              <div class="form-text mb-3" id="durasi-info">Maksimal 14 hari.</div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-7">
+                  <label class="form-label small fw-semibold">Budget total (Rp) <span class="text-danger">*</span></label>
+                  <input type="number" class="form-control" id="budget" min="1" step="50000"
+                         placeholder="3000000" required />
+                </div>
+                <div class="col-5">
+                  <label class="form-label small fw-semibold">Jumlah orang</label>
+                  <input type="number" class="form-control" id="jumlah" min="1" max="20" value="2" />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Minat (pilih maksimal 8)</label>
+                <div class="d-flex flex-wrap gap-2" id="minat-wrap">
+                  <!-- diisi otomatis lewat /js/planner.js -->
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Gaya perjalanan</label>
+                <select class="form-select" id="pace">
+                  <option value="santai">Santai — 2-3 aktivitas per hari</option>
+                  <option value="sedang" selected>Sedang — 4 aktivitas per hari</option>
+                  <option value="padat">Padat — 5-6 aktivitas per hari</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Kebutuhan khusus</label>
+                <textarea class="form-control" id="kebutuhan" rows="2" maxlength="200"
+                          placeholder="Contoh: bawa balita, ramah kursi roda, tanpa makanan pedas"></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100" id="btn-generate">
+                Susun Itinerary
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== DAFTAR TRIP ==================== -->
+      <div class="col-lg-7">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h6 mb-0">Rencana kamu</h2>
+          <span class="badge text-bg-secondary" id="jumlah-trip">0</span>
+        </div>
+        <div id="daftar-trip">
+          <!-- diisi otomatis lewat /js/planner.js -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Teksnya sengaja jujur soal lamanya. Layar yang diem tanpa
+       penjelasan bikin user ngira aplikasinya nge-hang terus di-refresh,
+       padahal requestnya lagi jalan. -->
+  <div id="loading-overlay" class="align-items-center justify-content-center">
+    <div class="text-center px-3">
+      <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
+      <h2 class="h5">Menyusun itinerary…</h2>
+      <p class="text-muted small mb-0" style="max-width: 380px;">
+        AI lagi menyusun jadwal harian, lalu tiap tempat dicek ke peta
+        OpenStreetMap satu per satu. Biasanya butuh <strong>20-60 detik</strong>.
+        Jangan tutup halaman ini ya.
+      </p>
+    </div>
+  </div>
+
+  <script src="/js/include-partials.js"></script>
+  <script src="/js/navbar-auth.js"></script>
+  <script src="/js/geo-client.js"></script>
+  <script src="/js/planner.js"></script>
+</body>
+</html>
