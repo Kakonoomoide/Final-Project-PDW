@@ -6,7 +6,7 @@ const config = {
   sessionSecret: process.env.SESSION_SECRET || 'secret-default-ganti-ini',
   dbStorage: process.env.DB_STORAGE || './database.sqlite',
   geminiApiKey: process.env.GEMINI_API_KEY,
-  geminiModel: process.env.GEMINI_MODEL || 'gemini-3.7-flash',
+  geminiModel: process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
   weatherApiKey: process.env.WEATHER_API_KEY,
 
   // Nominatim (OpenStreetMap) dipake buat verifikasi lokasi tempat di
