@@ -8,7 +8,7 @@
     "start": "node app.js",
     "dev": "nodemon app.js",
     "seed": "node seeders/seed.js",
-    "test": "node --test test/",
+    "test": "node --test",
     "db:reset": "node -e \"require('fs').rmSync(process.env.DB_STORAGE||'./database.sqlite',{force:true})\" && npm run seed"
   },
   "dependencies": {
