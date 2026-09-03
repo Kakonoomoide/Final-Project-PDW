@@ -36,6 +36,41 @@ const AKTIVITAS_PER_PACE = {
 // model yang jelas lagi gak bisa nurutin kontraknya.
 const MAX_PERCOBAAN = 2;
 
+/**
+ * Terjemahin error mentah dari API jadi kalimat yang berguna buat user.
+ *
+ * Error asli dari Gemini itu bentuknya kayak:
+ *   got status: 503 Service Unavailable. {"error":{"code":503,...}}
+ * Kalimat itu gak ngasih tau user apa pun yang bisa dia lakuin. Padahal
+ * pesan ini disimpen di `trips.lastError` dan ditampilin apa adanya di
+ * kartu trip yang gagal - jadi harus kebaca sebagai bahasa manusia.
+ *
+ * Pesan aslinya tetep dilempar ke console buat yang ngoding.
+ */
+function pesanRamah(errorMentah) {
+  const teks = String(errorMentah || '');
+
+  if (/503|overload|high demand|unavailable/i.test(teks)) {
+    return 'Server AI lagi ramai. Coba lagi beberapa menit lagi ya.';
+  }
+  if (/429|quota|rate limit/i.test(teks)) {
+    return 'Kuota AI hari ini sudah habis. Coba lagi nanti.';
+  }
+  if (/API[_ ]?KEY|api key|401|403|permission/i.test(teks)) {
+    return 'API key Gemini belum benar. Cek GEMINI_API_KEY di file .env.';
+  }
+  if (/timeout|ETIMEDOUT|ENOTFOUND|ECONNREFUSED|fetch failed/i.test(teks)) {
+    return 'Gagal menghubungi server AI. Cek koneksi internet kamu.';
+  }
+  if (/bukan JSON yang valid/i.test(teks)) {
+    return 'Balasan AI tidak bisa dibaca. Coba buat ulang.';
+  }
+
+  // Sisanya biasanya pesan dari validator kita sendiri, yang emang udah
+  // ditulis buat dibaca manusia ("Jumlah hari dari AI (3) tidak sama...").
+  return teks || 'Gagal membuat itinerary';
+}
+
 /* ==================== helper tanggal ==================== */
 
 function hitungDurasi(startDate, endDate) {
@@ -239,7 +274,10 @@ async function generateUntuk(trip, preference) {
         responseSchema: RESPONSE_SCHEMA,
       });
     } catch (err) {
-      errorTerakhir = err.message;
+      // Pesan aslinya ditaruh di log buat yang ngoding; user dapet versi
+      // yang bisa dia pahami.
+      console.error('[trip.service] Gemini gagal:', err.message);
+      errorTerakhir = pesanRamah(err.message);
       break; // error API (key salah, kuota habis) percuma diulang di sini -
              // gemini.service udah punya retry sendiri buat 503/429
     }
@@ -252,18 +290,17 @@ async function generateUntuk(trip, preference) {
       return { success: true, itinerary };
     }
 
-    errorTerakhir = hasil.errors.join('; ');
+    errorTerakhir = pesanRamah(hasil.errors.join('; '));
     prompt = `${promptAwal}\n\nPercobaan sebelumnya ditolak karena:\n- ${hasil.errors.join('\n- ')}\nPerbaiki dan balas ulang.`;
   }
 
+  const pesanAkhir = (errorTerakhir || 'Gagal membuat itinerary').slice(0, 250);
+
   // Trip TETEP disimpen dengan status failed, gak dihapus - biar user
   // bisa mencet "coba lagi" tanpa ngisi ulang formulirnya dari nol.
-  await trip.update({
-    status: Trip.STATUS.FAILED,
-    lastError: (errorTerakhir || 'Gagal membuat itinerary').slice(0, 250),
-  });
+  await trip.update({ status: Trip.STATUS.FAILED, lastError: pesanAkhir });
 
-  return { success: false, message: errorTerakhir || 'Gagal membuat itinerary' };
+  return { success: false, message: pesanAkhir };
 }
 
 async function createAndGenerate({ userId, input }) {

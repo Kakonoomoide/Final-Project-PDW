@@ -58,8 +58,9 @@ async function callWithRetry(fn, maxAttempt = 3) {
 
 /**
  * Pemanggilan Gemini paling dasar: kirim `contents`, dapet teks balasan.
- * Dipake fitur yang SEKALI JALAN (gak butuh riwayat) - contoh: deteksi
- * foto hama (M5), generate caption (M2), generate deskripsi (M4).
+ * Dipake fitur yang SEKALI JALAN (gak butuh riwayat) - contoh:
+ * identifikasi tempat dari foto (M5), caption artikel (M2),
+ * deskripsi destinasi (M4).
  */
 async function generate({ contents, systemInstruction }) {
   const ai = getClient();
@@ -81,7 +82,8 @@ async function generate({ contents, systemInstruction }) {
 /**
  * Versi buat percakapan MULTI-TURN (M5). Bedanya sama `generate()`:
  * riwayat obrolan sebelumnya ikut dikirim, jadi Gemini nyambung pas user
- * nanya lanjutan ("terus obatnya apa?") tanpa harus ngulang konteks.
+ * nanya lanjutan ("dari situ ke bandara berapa lama?") tanpa harus
+ * ngulang konteks.
  *
  * @param {Array} history - [{ role: 'user'|'model', parts: [{ text }] }]
  */

@@ -24,7 +24,7 @@ const ChatMessage = sequelize.define(
     role: { type: DataTypes.STRING, allowNull: false },
     content: { type: DataTypes.TEXT, allowNull: false },
     // fotonya sendiri gak disimpen (bikin database bengkak), cuma
-    // ditandain biar UI bisa kasih label "📷 Foto tanaman"
+    // ditandain biar UI bisa kasih label "📷 Foto tempat"
     hasImage: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   },
   { tableName: 'chat_messages', timestamps: true }
