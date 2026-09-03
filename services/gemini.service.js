@@ -297,6 +297,41 @@ Panduan Penulisan:
   return generate({ contents: prompt });
 }
 
+/**
+ * M1: narasiin rekomendasi waktu berkunjung berdasarkan data cuaca
+ * terkini kota tujuan (dari services/weather.service.js).
+ *
+ * Sengaja cuma dikasih angka cuaca yang sudah diringkas (bukan payload
+ * mentah OpenWeatherMap) - lebih murah, dan AI gak perlu tau bentuk
+ * respons API cuacanya.
+ */
+async function narasiWaktuBerkunjung({ city, condition, description, temp, humidity, windSpeed }) {
+  if (!city) {
+    throw new Error('Data kota wajib ada sebelum minta narasi AI');
+  }
+
+  const prompt = `
+Kamu asisten wisata untuk platform "TrAvelIt".
+Berikut kondisi cuaca TERKINI di ${city}:
+- Kondisi: ${condition || 'tidak diketahui'} (${description || '-'})
+- Suhu: ${temp}°C
+- Kelembapan: ${humidity ?? '-'}%
+- Kecepatan angin: ${windSpeed ?? '-'} m/s
+
+Tugasmu: tulis rekomendasi singkat (maksimal 3 kalimat) soal enak atau
+tidaknya jalan-jalan ke ${city} berdasarkan cuaca di atas, plus satu
+saran praktis (misal bawa payung, jaket, sunscreen, atau waktu terbaik
+dalam sehari untuk keluar).
+
+Ketentuan:
+- Bahasa Indonesia yang hangat dan santai, bukan istilah cuaca teknis.
+- Jangan mengulang angka suhu/kelembapan, langsung ke rekomendasinya.
+- Jangan pakai tanda kutip di awal atau akhir kalimat.
+`.trim();
+
+  return generate({ contents: prompt });
+}
+
 module.exports = {
   getClient,
   pesanRamah,
@@ -306,4 +341,5 @@ module.exports = {
   callWithRetry,
   generateCaption, // M2
   generateDescription, // M4
+  narasiWaktuBerkunjung, // M1
 };

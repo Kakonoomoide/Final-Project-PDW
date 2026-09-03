@@ -3,24 +3,373 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TrAvelIt</title>
+  <title>TrAvelIt — Rencana Perjalanan Dibantu AI</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ===== Landing page (Mahasiswa 1) =====
+       Tema visual: "senja di kota tujuan" - gradasi langit dusk + garis
+       kontur/rute putus-putus yang jadi benang merah antar-seksi, karena
+       inti produk ini memang tentang rute & peta. Widget cuaca dibentuk
+       kayak boarding pass, biar nyambung ke tema perjalanan bukan cuma
+       kotak generik. */
+
+    :root {
+      --ink: #14232a;
+      --ink-soft: #4b5d63;
+      --dusk-1: #101c33;
+      --dusk-2: #0d5c60;
+      --dusk-3: #f2a65a;
+      --paper: #f4f7f5;
+      --paper-card: #ffffff;
+      --line: #dbe4e0;
+      --gold: #e08e3e;
+      --teal: #0e7c7b;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+    }
+
+    h1, h2, h3, .display-font {
+      font-family: 'Bricolage Grotesque', 'Inter', sans-serif;
+      letter-spacing: -0.01em;
+    }
+
+    /* ---------- HERO ---------- */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(155deg, var(--dusk-1) 0%, var(--dusk-2) 62%, var(--dusk-3) 130%);
+      color: #f7f4ee;
+      padding: 4.5rem 0 6rem;
+    }
+
+    .hero__contours {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    .hero__inner {
+      position: relative;
+      z-index: 1;
+      max-width: 640px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.1rem, 4.2vw, 3.15rem);
+      font-weight: 700;
+      line-height: 1.12;
+      margin-bottom: 1.1rem;
+    }
+
+    .hero p.lead {
+      font-size: 1.08rem;
+      color: #dce7e2;
+      max-width: 46ch;
+      margin-bottom: 1.9rem;
+    }
+
+    .hero__ctas { display: flex; flex-wrap: wrap; gap: .75rem; margin-bottom: 2.2rem; }
+
+    .btn-sun {
+      background: var(--gold);
+      border: none;
+      color: #201404;
+      font-weight: 600;
+      padding: .68rem 1.4rem;
+      border-radius: 8px;
+      transition: transform .12s ease, background .15s ease;
+    }
+    .btn-sun:hover { background: #ec9c48; transform: translateY(-1px); color: #201404; }
+
+    .btn-outline-hero {
+      background: transparent;
+      border: 1px solid rgba(247, 244, 238, .4);
+      color: #f7f4ee;
+      font-weight: 600;
+      padding: .68rem 1.4rem;
+      border-radius: 8px;
+      transition: border-color .15s ease, background .15s ease;
+    }
+    .btn-outline-hero:hover { border-color: #f7f4ee; background: rgba(247, 244, 238, .08); color: #f7f4ee; }
+
+    .hero__facts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.6rem 2.2rem;
+      font-size: .92rem;
+      color: #cddbd5;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(247, 244, 238, .18);
+    }
+    .hero__facts span.num { color: #f7f4ee; font-weight: 600; font-family: 'Bricolage Grotesque', sans-serif; }
+
+    /* route divider between hero and next section */
+    .route-divider {
+      display: block;
+      width: 100%;
+      height: 46px;
+      margin-top: -1px;
+    }
+    .route-divider path {
+      stroke-dasharray: 900;
+      stroke-dashoffset: 900;
+      animation: draw-route 1.6s ease-out .3s forwards;
+    }
+    @keyframes draw-route { to { stroke-dashoffset: 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .route-divider path { animation: none; stroke-dashoffset: 0; }
+    }
+
+    /* ---------- SECTION SHELL ---------- */
+    section.block { padding: 3.6rem 0; }
+    .block__head { max-width: 54ch; margin-bottom: 2rem; }
+    .block__head h2 { font-size: 1.65rem; font-weight: 700; margin-bottom: .5rem; }
+    .block__head p { color: var(--ink-soft); margin-bottom: 0; }
+
+    /* ---------- WEATHER "BOARDING PASS" WIDGET ---------- */
+    .weather-form { max-width: 460px; margin-bottom: 1.75rem; }
+    .weather-form .form-control {
+      border-radius: 8px 0 0 8px;
+      border-color: var(--line);
+      padding: .65rem .9rem;
+    }
+    .weather-form .form-control:focus { border-color: var(--teal); box-shadow: 0 0 0 .2rem rgba(14,124,123,.15); }
+    .weather-form .btn-search {
+      border-radius: 0 8px 8px 0;
+      background: var(--ink);
+      color: #f7f4ee;
+      font-weight: 600;
+      padding: .65rem 1.2rem;
+    }
+    .weather-form .btn-search:hover { background: #0e2731; color: #f7f4ee; }
+
+    .city-chip {
+      display: inline-block;
+      font-size: .82rem;
+      color: var(--teal);
+      background: #e9f4f3;
+      border: 1px solid #cfe6e4;
+      border-radius: 999px;
+      padding: .25rem .75rem;
+      margin: 0 .4rem .4rem 0;
+      cursor: pointer;
+      transition: background .12s ease;
+    }
+    .city-chip:hover { background: #d9edeb; }
+
+    .ticket {
+      position: relative;
+      display: flex;
+      background: var(--paper-card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 1px 0 rgba(20,35,42,.03);
+    }
+    .ticket__stub {
+      flex: 0 0 200px;
+      background: linear-gradient(160deg, var(--dusk-1), var(--dusk-2));
+      color: #f7f4ee;
+      padding: 1.5rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .ticket__city { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.2rem; font-weight: 700; line-height: 1.2; }
+    .ticket__country { font-size: .8rem; color: #cddbd5; margin-bottom: .6rem; }
+    .ticket__temp { font-family: 'Bricolage Grotesque', sans-serif; font-size: 2.4rem; font-weight: 700; display: flex; align-items: center; gap: .35rem; }
+    .ticket__condition { font-size: .88rem; color: #e7ded0; text-transform: capitalize; }
+
+    .ticket__perforation {
+      position: relative;
+      flex: 0 0 1px;
+      background-image: repeating-linear-gradient(to bottom, var(--line) 0 8px, transparent 8px 16px);
+    }
+    .ticket__perforation::before, .ticket__perforation::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--paper);
+    }
+    .ticket__perforation::before { top: -10px; }
+    .ticket__perforation::after { bottom: -10px; }
+
+    .ticket__body { flex: 1 1 auto; padding: 1.5rem 1.6rem; }
+    .ticket__fields {
+      display: flex;
+      gap: 1.6rem;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px dashed var(--line);
+    }
+    .ticket__field-label { font-size: .72rem; color: var(--ink-soft); margin-bottom: .15rem; }
+    .ticket__field-value { font-weight: 600; font-size: .95rem; }
+    .ticket__rekomendasi { font-size: .97rem; line-height: 1.55; color: var(--ink); }
+    .ticket__rekomendasi::before { content: "✦ "; color: var(--gold); }
+
+    .weather-empty, .weather-error, .weather-loading {
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      padding: 1.8rem;
+      color: var(--ink-soft);
+      font-size: .95rem;
+    }
+    .weather-error { border-color: #e7b8ad; color: #8a3a24; background: #fdf3ef; }
+
+    /* ---------- ARTIKEL ---------- */
+    .article-feature {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--paper-card);
+      height: 100%;
+    }
+    .article-feature__img { width: 100%; aspect-ratio: 16/10; object-fit: cover; background: #e7edea; }
+    .article-feature__body { padding: 1.3rem 1.4rem 1.5rem; border-top: 3px solid var(--gold); }
+    .article-feature__body h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: .5rem; }
+    .article-feature__body p { color: var(--ink-soft); font-size: .95rem; margin-bottom: 0; }
+
+    .article-row {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .article-row:last-child { border-bottom: none; }
+    .article-row__img { flex: 0 0 96px; width: 96px; height: 72px; object-fit: cover; border-radius: 8px; background: #e7edea; }
+    .article-row__title { font-weight: 600; font-size: 1rem; margin-bottom: .25rem; }
+    .article-row__excerpt { color: var(--ink-soft); font-size: .87rem; margin: 0; }
+    .article-row__date { font-size: .78rem; color: var(--ink-soft); }
+
+    .articles-empty { padding: 2.5rem 1rem; text-align: center; color: var(--ink-soft); border: 1px dashed var(--line); border-radius: 14px; }
+
+    footer.site-footer {
+      background: var(--dusk-1);
+      color: #b9c8c3;
+      padding: 2rem 0;
+      font-size: .88rem;
+    }
+    footer.site-footer a { color: #e9d6bb; text-decoration: none; }
+
+    @media (max-width: 576px) {
+      .ticket { flex-direction: column; }
+      .ticket__stub { flex: none; }
+      .ticket__perforation { display: none; }
+      .article-row__img { flex-basis: 72px; width: 72px; height: 56px; }
+    }
+  </style>
 </head>
 <body>
   <div data-include="/partials/navbar-user.html"></div>
 
-  <main class="container py-4">
-    <!-- TODO Mahasiswa 1: Landing page
-         - hero + ajakan ke /planner
-         - daftar artikel wisata terbaru dari GET /api/articles (punya Mahasiswa 2)
-         - widget cuaca kota tujuan (pakai WEATHER_API_KEY di .env)
-         - AI narasiin rekomendasi waktu berkunjung berdasarkan data cuaca itu
-           (pakai gemini.generate(), lihat services/gemini.service.js)
-    -->
-    <h1>Landing Page (Mahasiswa 1)</h1>
-  </main>
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <svg class="hero__contours" viewBox="0 0 1200 500" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M-50,120 C 200,60 350,180 600,110 S 1000,40 1250,100" fill="none" stroke="#f7f4ee" stroke-width="1.4" />
+      <path d="M-50,220 C 220,170 380,270 640,210 S 1020,150 1250,205" fill="none" stroke="#f2a65a" stroke-width="1.4" />
+      <path d="M-50,320 C 240,280 400,360 660,300 S 1040,250 1250,300" fill="none" stroke="#f7f4ee" stroke-width="1.2" />
+      <path d="M-50,410 C 260,380 420,440 680,400 S 1060,360 1250,400" fill="none" stroke="#f2a65a" stroke-width="1" />
+    </svg>
+
+    <div class="container">
+      <div class="hero__inner">
+        <h1>Rencana liburan yang beneran bisa dijalani, bukan sekadar wishlist.</h1>
+        <p class="lead">
+          Isi tujuan, tanggal, dan budget — TrAvelIt menyusun itinerary harian
+          lengkap dengan estimasi biaya dan peta, lalu tiap tempatnya
+          diverifikasi ke OpenStreetMap supaya jadwalnya bukan cuma karangan AI.
+        </p>
+        <div class="hero__ctas">
+          <a href="/planner" class="btn btn-sun">Susun rencana perjalanan</a>
+          <a href="/destinasi" class="btn btn-outline-hero">Lihat destinasi</a>
+        </div>
+        <div class="hero__facts">
+          <div><span class="num">14 hari</span> durasi maksimal per rencana</div>
+          <div><span class="num">±10 detik</span> verifikasi tiap tempat ke peta</div>
+          <div><span class="num">24/7</span> asisten AI buat tanya-tanya perjalanan</div>
+        </div>
+      </div>
+    </div>
+
+    <svg class="route-divider" viewBox="0 0 1200 46" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M0,23 L1200,23" stroke="#0d5c60" stroke-width="2" stroke-dasharray="2 10" stroke-linecap="round" />
+    </svg>
+  </section>
+
+  <!-- ================= CUACA + REKOMENDASI AI ================= -->
+  <section class="block">
+    <div class="container">
+      <div class="block__head">
+        <h2>Cek dulu cuaca di kota tujuanmu</h2>
+        <p>Masukkan nama kotanya, AI kasih rekomendasi singkat enaknya jalan-jalan kapan berdasarkan cuaca hari ini.</p>
+      </div>
+
+      <form class="weather-form d-flex" id="weatherForm">
+        <input
+          type="text"
+          class="form-control"
+          id="cityInput"
+          placeholder="Nama kota tujuan, misal Bandung"
+          autocomplete="off"
+          required
+        />
+        <button type="submit" class="btn btn-search" id="weatherSubmitBtn">Cek Cuaca</button>
+      </form>
+
+      <div class="mb-4">
+        <span class="city-chip" data-city="Bali">Bali</span>
+        <span class="city-chip" data-city="Yogyakarta">Yogyakarta</span>
+        <span class="city-chip" data-city="Bandung">Bandung</span>
+        <span class="city-chip" data-city="Malang">Malang</span>
+        <span class="city-chip" data-city="Lombok">Lombok</span>
+      </div>
+
+      <div id="weatherResult">
+        <div class="weather-empty">
+          Belum ada kota yang dicek. Coba ketik nama kota atau pilih salah satu
+          contoh di atas.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ARTIKEL WISATA ================= -->
+  <section class="block" style="background:#eef3f1;">
+    <div class="container">
+      <div class="block__head">
+        <h2>Cerita &amp; tips wisata terbaru</h2>
+        <p>Ditulis tim TrAvelIt supaya rencana perjalananmu lebih matang sebelum berangkat.</p>
+      </div>
+
+      <div id="articlesResult">
+        <div class="articles-empty">Memuat artikel...</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container d-flex flex-wrap justify-content-between gap-2">
+      <span>🧭 TrAvelIt — Final Project PDW</span>
+      <span>Dibantu <a href="https://ai.google.dev/" target="_blank" rel="noopener">Gemini AI</a> &amp; peta <a href="https://www.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a></span>
+    </div>
+  </footer>
 
   <script src="/js/include-partials.js"></script>
   <script src="/js/navbar-auth.js"></script>
+  <script src="/js/landing.js"></script>
 </body>
 </html>

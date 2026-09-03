@@ -15,6 +15,7 @@ const destinationRoutes = require('./routes/destination.routes'); // M4
 const chatRoutes = require('./routes/chat.routes'); // M5
 const tripRoutes = require('./routes/trip.routes'); // M5
 const geoRoutes = require('./routes/geo.routes'); // M5
+const weatherRoutes = require('./routes/weather.routes'); // M1
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use('/api/ai', browseDestinationRoutes); // M3 -> /api/ai/destination-finder
 app.use('/api/destinations', destinationRoutes); // M4
 app.use('/api/trips', tripRoutes); // M5
 app.use('/api/geo', geoRoutes); // M5
+app.use('/api/weather', weatherRoutes); // M1
 app.use('/api/admin', adminRoutes);
 app.use('/admin', adminPageRoutes);
 app.use('/', pageRoutes);
