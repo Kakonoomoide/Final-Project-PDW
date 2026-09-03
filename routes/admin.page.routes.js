@@ -4,7 +4,7 @@ const page = require('../controllers/page.controller');
 const { requireAdminPage } = require('../middlewares/auth.middleware');
 
 router.get('/', requireAdminPage, page.adminDashboard);
-router.get('/news', requireAdminPage, page.adminNewsPage); // M2
-router.get('/produk', requireAdminPage, page.adminProductsPage); // M4
+router.get('/artikel', requireAdminPage, page.adminArticlesPage); // M2
+router.get('/destinasi', requireAdminPage, page.adminDestinationsPage); // M4
 
 module.exports = router;

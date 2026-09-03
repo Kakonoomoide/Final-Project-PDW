@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kelola Destinasi - TrAvelIt</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+  <div data-include="/partials/navbar-admin.html"></div>
+
+  <div class="d-flex">
+    <div data-include="/partials/sidebar-admin.html"></div>
+
+    <main class="flex-grow-1 p-4">
+      <!-- TODO Mahasiswa 4: CRUD Destinasi + AI rekomendasi deskripsi
+           - bikin endpoint /api/destinations (routes + controller + service),
+             modelnya udah ada di models/destination.model.js
+             kolom: name, category, city, province, description, ticketPrice,
+                    lat, lng, imageUrl, createdBy
+           - tombol "Generate Deskripsi dengan AI": kirim nama + kategori + kota
+             ke Gemini lewat gemini.generate(), dapetin draft deskripsi
+           - kolom lat/lng dipake buat plot di peta. Kalau gak mau isi manual,
+             bisa pakai geo.geocode() di services/geo.service.js buat nyari
+             koordinat dari nama + kota (inget: 1 request per detik)
+           - 6 destinasi dummy udah disiapin lewat `npm run seed`
+      -->
+      <h1>CRUD Destinasi Wisata (Mahasiswa 4)</h1>
+    </main>
+  </div>
+
+  <script src="/js/include-partials.js"></script>
+  <script src="/js/navbar-auth.js"></script>
+</body>
+</html>

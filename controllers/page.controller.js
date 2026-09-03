@@ -11,13 +11,15 @@ module.exports = {
   loginPage: serve('auth/login.html'),
   registerPage: serve('auth/register.html'),
 
-  // user (public)
+  // user (publik)
   landingPage: serve('user/landing.html'), // M1
-  userProductsPage: serve('user/products.html'), // M3
+  destinationsPage: serve('user/destinations.html'), // M3
+  plannerPage: serve('user/planner.html'), // M5
+  tripDetailPage: serve('user/trip.html'), // M5
   chatPage: serve('user/chat.html'), // M5
 
-  // admin (proteksi requireAdmin dipasang di routes)
+  // admin (proteksi requireAdminPage dipasang di routes)
   adminDashboard: serve('admin/dashboard.html'),
-  adminNewsPage: serve('admin/news.html'), // M2
-  adminProductsPage: serve('admin/products.html'), // M4
+  adminArticlesPage: serve('admin/articles.html'), // M2
+  adminDestinationsPage: serve('admin/destinations.html'), // M4
 };

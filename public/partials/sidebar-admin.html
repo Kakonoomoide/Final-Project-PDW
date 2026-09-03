@@ -1,15 +1,17 @@
 <div class="bg-white border-end vh-100 p-3" style="width: 220px;">
   <div class="nav flex-column nav-pills gap-1">
     <a class="nav-link" href="/admin">📊 Dashboard</a>
-    <a class="nav-link" href="/admin/news">📰 Kelola News (M2)</a>
-    <a class="nav-link" href="/admin/produk">🌱 Kelola Bahan Pertanian (M4)</a>
+    <a class="nav-link" href="/admin/artikel">📰 Kelola Artikel (M2)</a>
+    <a class="nav-link" href="/admin/destinasi">📍 Kelola Destinasi (M4)</a>
 
     <hr class="my-2" />
 
-    <!-- Chat AI itu halaman USER (/chat), bukan halaman admin - liat PRD
-         bagian 5 (M5). Ditaruh di sini biar admin gak perlu keluar dulu
-         ke situs publik buat konsultasi/deteksi hama. Endpointnya cuma
-         butuh login (requireAuth), jadi admin juga bisa pake. -->
-    <a class="nav-link" href="/chat">💬 Chat AI Konsultasi (M5)</a>
+    <!-- Dua link di bawah itu halaman USER (/planner & /chat), bukan
+         halaman admin - liat PRD bagian 5 (M5). Ditaruh di sini biar
+         admin gak perlu keluar dulu ke situs publik buat nyoba fiturnya.
+         Endpointnya cuma butuh login (requireAuth), bukan requireAdmin,
+         jadi admin juga bisa pake. -->
+    <a class="nav-link" href="/planner">🗺️ Rencana Perjalanan (M5)</a>
+    <a class="nav-link" href="/chat">💬 Asisten AI (M5)</a>
   </div>
 </div>
