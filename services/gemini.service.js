@@ -157,4 +157,95 @@ async function generateJson({ prompt, systemInstruction, responseSchema }) {
   }
 }
 
-module.exports = { getClient, generate, chat, generateJson, callWithRetry };
+/**
+ * M2: bikin 3 pilihan caption buat artikel wisata.
+ *
+ * Ditulis di atas `generateJson()` (bukan manggil ai.models langsung)
+ * supaya ikut kebagian retry otomatis pas Gemini lagi sibuk - dulu versi
+ * M2 manggil client-nya sendiri, jadi 503 sekali langsung gagal.
+ */
+async function generateCaption(title, content) {
+  if (!title || !content) {
+    throw new Error('Judul dan isi artikel wajib diisi');
+  }
+
+  const prompt = `
+Kamu AI assistant untuk website wisata bernama TrAvelIt.
+Tugas kamu bikin 3 pilihan caption untuk sebuah artikel wisata.
+
+Judul artikel:
+${title}
+
+Isi artikel:
+${content}
+
+Ketentuan:
+- Gunakan bahasa Indonesia.
+- Caption harus menarik, singkat, dan mudah dipahami.
+- Caption harus relevan dengan isi artikel.
+- Cocok dipakai untuk website artikel wisata.
+- Jangan membuat informasi yang tidak ada dalam artikel.
+- Setiap pilihan caption harus berbeda.
+- Jangan pakai tanda kutip di awal atau akhir caption.
+`.trim();
+
+  // Dibungkus objek (bukan array telanjang) karena beberapa versi API
+  // nolak schema bertipe array di level paling atas.
+  const hasil = await generateJson({
+    prompt,
+    responseSchema: {
+      type: 'object',
+      properties: {
+        captions: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['captions'],
+    },
+  });
+
+  const captions = (Array.isArray(hasil) ? hasil : hasil.captions || [])
+    .filter((c) => typeof c === 'string')
+    .map((c) => c.trim())
+    .filter((c) => c.length > 0)
+    .slice(0, 3);
+
+  if (captions.length === 0) throw new Error('Gemini tidak menghasilkan caption');
+
+  return captions;
+}
+
+/**
+ * M4: bikin draft deskripsi destinasi wisata.
+ */
+async function generateDescription({ name, category = 'destinasi wisata', city = '', notes = '' }) {
+  if (!name || name.trim() === '') {
+    throw new Error('Nama destinasi wajib diisi sebelum generate deskripsi AI');
+  }
+
+  const prompt = `Kamu pakar pariwisata dan copywriter profesional untuk platform wisata "TrAvelIt".
+Buatlah deskripsi destinasi yang informatif dan menarik untuk wisatawan:
+
+- Nama Destinasi: ${name.trim()}
+- Kategori: ${String(category || '').trim()}
+${city && city.trim() ? `- Lokasi: ${city.trim()}` : ''}
+${notes && notes.trim() ? `- Instruksi/Detail Khusus: ${notes.trim()}` : ''}
+
+Panduan Penulisan:
+1. Awali 1 paragraf tentang daya tarik utama destinasi ini.
+2. Berikan poin-poin hal menarik yang bisa dilakukan di sana.
+3. Berikan tips singkat berkunjung (waktu terbaik, yang perlu disiapkan).
+4. Bahasa Indonesia yang baku, profesional, mudah dipahami.
+5. Langsung berikan teks deskripsinya tanpa kalimat pembuka atau penutup basa-basi.
+6. Jangan mengarang harga tiket atau jam operasional yang spesifik.`;
+
+  return generate({ contents: prompt });
+}
+
+module.exports = {
+  getClient,
+  generate,
+  chat,
+  generateJson,
+  callWithRetry,
+  generateCaption, // M2
+  generateDescription, // M4
+};

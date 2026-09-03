@@ -5,8 +5,11 @@ Jembatan HTTP request <-> logic bisnis. Tipis: validasi input, panggil
 
 - `auth.controller.js` — register, login, logout, me
 - `page.controller.js` — serve semua file HTML dari `views/`
+- `article.controller.js` — CRUD artikel wisata + AI caption (M2)
+- `browse-destination.controller.js` — AI destination finder / quiz (M3)
+- `destination.controller.js` — CRUD katalog destinasi + AI deskripsi (M4)
 - `trip.controller.js` — perencana rute wisata (M5)
-- `geo.controller.js` — proxy reverse geocode buat tombol "pakai lokasi saya"
+- `geo.controller.js` — proxy geocode & reverse geocode ke Nominatim
 - `admin.controller.js` — statistik agregat dashboard admin
 - `chat.controller.js` — asisten perjalanan & identifikasi tempat (M5)
 

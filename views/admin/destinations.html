@@ -4,32 +4,485 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kelola Destinasi - TrAvelIt</title>
+  <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+  <style>
+    body {
+      background-color: #f8fafc;
+      min-height: 100vh;
+      color: #334155;
+    }
+    .card-stat {
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      border-radius: 12px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-stat:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    }
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+    }
+    .table-card {
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+    /* gradien biru, ngikutin tema TrAvelIt (sebelumnya hijau tema tani) */
+    .ai-box {
+      background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+    }
+    .btn-ai {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+      transition: all 0.2s ease;
+    }
+    .btn-ai:hover {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(59, 130, 246, 0.35);
+    }
+    .btn-ai:active {
+      transform: translateY(0);
+    }
+    .table > :not(caption) > * > * {
+      padding: 0.85rem 0.85rem;
+    }
+    .table-hover tbody tr:hover {
+      background-color: #f1f5f9;
+    }
+    .destination-img-thumb {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .cursor-pointer {
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;"></div>
+
   <div data-include="/partials/navbar-admin.html"></div>
 
   <div class="d-flex">
     <div data-include="/partials/sidebar-admin.html"></div>
 
-    <main class="flex-grow-1 p-4">
-      <!-- TODO Mahasiswa 4: CRUD Destinasi + AI rekomendasi deskripsi
-           - bikin endpoint /api/destinations (routes + controller + service),
-             modelnya udah ada di models/destination.model.js
-             kolom: name, category, city, province, description, ticketPrice,
-                    lat, lng, imageUrl, createdBy
-           - tombol "Generate Deskripsi dengan AI": kirim nama + kategori + kota
-             ke Gemini lewat gemini.generate(), dapetin draft deskripsi
-           - kolom lat/lng dipake buat plot di peta. Kalau gak mau isi manual,
-             bisa pakai geo.geocode() di services/geo.service.js buat nyari
-             koordinat dari nama + kota (inget: 1 request per detik)
-           - 6 destinasi dummy udah disiapin lewat `npm run seed`
-      -->
-      <h1>CRUD Destinasi Wisata (Mahasiswa 4)</h1>
+    <main class="flex-grow-1 p-4" style="min-width: 0; background-color: #f8fafc;">
+
+      <!-- Page Header -->
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <h2 class="h3 fw-bold mb-0 text-dark">📍 Kelola Destinasi</h2>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">M4 Jobdesk</span>
+          </div>
+          <p class="text-muted mb-0 small mt-1">
+            Manajemen katalog destinasi wisata dan pembuatan deskripsi otomatis menggunakan Gemini AI.
+          </p>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 shadow-sm" id="btn-refresh" title="Refresh Data">
+            <i class="bi bi-arrow-clockwise"></i>
+            <span>Refresh</span>
+          </button>
+          <button type="button" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm" id="btn-add-destination">
+            <i class="bi bi-plus-lg"></i>
+            <span class="fw-semibold">Tambah Destinasi</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Overview Stats Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card card-stat bg-white h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted small fw-medium text-uppercase">Total Destinasi</span>
+                <h3 class="fw-bold mb-0 mt-1 text-dark" id="stat-total-destinations">-</h3>
+              </div>
+              <div class="stat-icon bg-primary-subtle text-primary">
+                <i class="bi bi-geo-alt fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card card-stat bg-white h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted small fw-medium text-uppercase">Sudah Dipetakan</span>
+                <h3 class="fw-bold mb-0 mt-1 text-dark" id="stat-mapped">-</h3>
+              </div>
+              <div class="stat-icon bg-success-subtle text-success">
+                <i class="bi bi-pin-map fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card card-stat bg-white h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted small fw-medium text-uppercase">Belum Dipetakan</span>
+                <h3 class="fw-bold mb-0 mt-1 text-dark" id="stat-unmapped">-</h3>
+              </div>
+              <div class="stat-icon bg-warning-subtle text-warning">
+                <i class="bi bi-exclamation-triangle fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="card card-stat bg-white h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted small fw-medium text-uppercase">Rata-rata Tiket</span>
+                <h3 class="fw-bold mb-0 mt-1 text-dark" id="stat-avg-price">-</h3>
+              </div>
+              <div class="stat-icon bg-info-subtle text-info">
+                <i class="bi bi-ticket-perforated fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Table Card -->
+      <div class="card table-card bg-white">
+        <div class="card-header bg-white border-bottom py-3">
+          <div class="row g-2 align-items-center">
+            <div class="col-12 col-md-4">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" id="filter-search" class="form-control bg-light border-start-0" placeholder="Cari nama, kota, atau deskripsi..." />
+              </div>
+            </div>
+
+            <div class="col-6 col-md-3">
+              <select id="filter-category" class="form-select form-select-sm">
+                <option value="all">Semua Kategori</option>
+                <option value="pantai">Pantai</option>
+                <option value="gunung">Gunung</option>
+                <option value="budaya">Budaya &amp; Sejarah</option>
+                <option value="kuliner">Kuliner</option>
+                <option value="taman">Taman &amp; Alam</option>
+                <option value="lainnya">Lainnya</option>
+              </select>
+            </div>
+
+            <div class="col-6 col-md-3">
+              <select id="filter-sort" class="form-select form-select-sm">
+                <option value="createdAt">Urut: Terbaru</option>
+                <option value="name">Urut: Nama Destinasi</option>
+                <option value="ticketPrice">Urut: Harga Tiket</option>
+                <option value="city">Urut: Kota</option>
+              </select>
+            </div>
+
+            <div class="col-12 col-md-2 d-flex justify-content-between align-items-center">
+              <select id="filter-order" class="form-select form-select-sm w-auto">
+                <option value="DESC">Desc (Z-A / Max)</option>
+                <option value="ASC">Asc (A-Z / Min)</option>
+              </select>
+              <span class="badge bg-secondary-subtle text-secondary ms-2" id="destination-count-badge">0 destinasi</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light text-muted small text-uppercase">
+              <tr>
+                <th scope="col" class="text-center" style="width: 50px;">No</th>
+                <th scope="col" style="min-width: 250px;">Destinasi</th>
+                <th scope="col" style="width: 130px;">Kategori</th>
+                <th scope="col" style="width: 150px;">Kota</th>
+                <th scope="col" style="width: 140px;">Tiket</th>
+                <th scope="col" style="width: 110px;">Peta</th>
+                <th scope="col" class="text-center" style="width: 120px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="destinations-table-body">
+              <!-- Diisi lewat JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="destinations-loading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="text-muted small mt-2 mb-0">Memuat data destinasi...</p>
+        </div>
+
+        <div id="destinations-empty" class="text-center py-5 d-none">
+          <div class="mb-3">
+            <i class="bi bi-inbox text-muted display-4"></i>
+          </div>
+          <h5 class="fw-bold text-dark">Belum ada destinasi</h5>
+          <p class="text-muted small mb-3">Tidak ada destinasi yang cocok dengan pencarian atau filter yang dipilih.</p>
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="openCreateModal()">
+            <i class="bi bi-plus-lg me-1"></i>Tambah Destinasi Pertama
+          </button>
+        </div>
+      </div>
     </main>
   </div>
 
+  <!-- ========================================================================= -->
+  <!-- MODAL: Tambah & Edit Destinasi (CRUD + AI Deskripsi) -->
+  <!-- ========================================================================= -->
+  <div class="modal fade" id="modal-destination" tabindex="-1" aria-labelledby="modal-destination-title" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow">
+        <form id="destination-form">
+          <div class="modal-header bg-light border-bottom">
+            <h5 class="modal-title fw-bold" id="modal-destination-title">
+              <i class="bi bi-plus-circle-fill text-primary me-2"></i>Tambah Destinasi Baru
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+
+          <div class="modal-body p-4">
+            <input type="hidden" id="destination-id" />
+
+            <!-- Row 1: Nama & Kategori -->
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-8">
+                <label for="destination-name" class="form-label fw-semibold small">Nama Destinasi <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="destination-name" placeholder="Contoh: Pantai Kuta / Candi Borobudur" required />
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="destination-category" class="form-label fw-semibold small">Kategori <span class="text-danger">*</span></label>
+                <select class="form-select" id="destination-category" required>
+                  <option value="pantai">Pantai</option>
+                  <option value="gunung">Gunung</option>
+                  <option value="budaya">Budaya &amp; Sejarah</option>
+                  <option value="kuliner">Kuliner</option>
+                  <option value="taman">Taman &amp; Alam</option>
+                  <option value="lainnya">Lainnya</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Row 2: Kota & Provinsi -->
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-6">
+                <label for="destination-city" class="form-label fw-semibold small">Kota / Kabupaten <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="destination-city" placeholder="Contoh: Badung" required />
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="destination-province" class="form-label fw-semibold small">Provinsi</label>
+                <input type="text" class="form-control" id="destination-province" placeholder="Contoh: Bali" />
+              </div>
+            </div>
+
+            <!-- Row 3: Harga tiket -->
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-6">
+                <label for="destination-ticket-price" class="form-label fw-semibold small">Harga Tiket Masuk (Rp)</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light">Rp</span>
+                  <input type="number" class="form-control" id="destination-ticket-price" min="0" placeholder="0" />
+                </div>
+                <div class="form-text small">Isi 0 kalau gratis.</div>
+              </div>
+            </div>
+
+            <!-- Row 4: Koordinat -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold small mb-1">Koordinat Peta (Opsional)</label>
+              <div class="row g-2">
+                <div class="col-6 col-md-4">
+                  <input type="number" step="any" class="form-control" id="destination-lat" placeholder="Lintang, misal -8.7184" />
+                </div>
+                <div class="col-6 col-md-4">
+                  <input type="number" step="any" class="form-control" id="destination-lng" placeholder="Bujur, misal 115.1686" />
+                </div>
+                <div class="col-12 col-md-4">
+                  <button type="button" class="btn btn-outline-secondary w-100" id="btn-lookup-coord">
+                    <i class="bi bi-search me-1"></i>Cari dari nama &amp; kota
+                  </button>
+                </div>
+              </div>
+              <div class="form-text small">
+                Kalau dikosongkan, koordinatnya dicari otomatis dari OpenStreetMap saat disimpan.
+                Koordinat dipakai buat menampilkan destinasi ini di peta.
+              </div>
+            </div>
+
+            <!-- Row 5: Gambar -->
+            <div class="mb-3">
+              <label for="destination-image-url" class="form-label fw-semibold small">URL Gambar Destinasi (Opsional)</label>
+              <input type="url" class="form-control" id="destination-image-url" placeholder="https://example.com/foto-destinasi.jpg" />
+
+              <div id="destination-image-preview-container" class="mt-2 d-none d-flex align-items-center gap-2 p-2 bg-light rounded border">
+                <img id="destination-image-preview" src="" alt="Preview" class="destination-img-thumb border" />
+                <span class="small text-muted">Preview Thumbnail Gambar</span>
+              </div>
+            </div>
+
+            <!-- Section Fitur AI Deskripsi (Gemini) -->
+            <div class="ai-box p-3 mb-3">
+              <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-primary text-white px-2 py-1"><i class="bi bi-stars me-1"></i>Gemini AI</span>
+                  <span class="fw-bold small text-dark">Rekomendasi Deskripsi Otomatis</span>
+                </div>
+                <button type="button" class="btn btn-ai btn-sm fw-semibold d-flex align-items-center justify-content-center gap-1" id="btn-generate-ai">
+                  <i class="bi bi-magic"></i>
+                  <span>✨ Generate Deskripsi AI</span>
+                </button>
+              </div>
+              <p class="text-muted small mb-2">
+                Klik tombol di atas untuk membuat rancangan deskripsi destinasi, daya tarik, serta tips berkunjung
+                secara otomatis berdasarkan Nama, Kategori, dan Kota.
+              </p>
+
+              <div class="mb-2">
+                <a class="text-decoration-none small fw-semibold text-primary d-inline-flex align-items-center gap-1" data-bs-toggle="collapse" href="#ai-notes-collapse" role="button" aria-expanded="false" aria-controls="ai-notes-collapse">
+                  <i class="bi bi-plus-circle"></i> Tambah Instruksi / Catatan Khusus untuk AI (Opsional)
+                </a>
+                <div class="collapse mt-2" id="ai-notes-collapse">
+                  <input type="text" id="ai-extra-notes" class="form-control form-control-sm" placeholder="Contoh: fokus ke spot foto sunrise, cocok untuk keluarga dengan anak kecil" />
+                </div>
+              </div>
+
+              <div id="ai-status-box" class="alert alert-primary d-flex align-items-center gap-2 py-2 px-3 mb-0 d-none">
+                <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                <span id="ai-status-text" class="small fw-semibold text-primary">Sedang memproses dengan Gemini AI...</span>
+              </div>
+            </div>
+
+            <!-- Textarea Deskripsi -->
+            <div class="mb-2">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="destination-description" class="form-label fw-semibold small mb-0">Deskripsi Lengkap Destinasi</label>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-link text-secondary btn-sm p-0 text-decoration-none small" id="btn-copy-desc" title="Salin Teks">
+                    <i class="bi bi-clipboard me-1"></i>Salin
+                  </button>
+                  <button type="button" class="btn btn-link text-danger btn-sm p-0 text-decoration-none small" id="btn-clear-desc" title="Kosongkan Teks">
+                    <i class="bi bi-x-circle me-1"></i>Bersihkan
+                  </button>
+                </div>
+              </div>
+              <textarea class="form-control" id="destination-description" rows="5" placeholder="Tuliskan deskripsi destinasi manual atau buat secara instan menggunakan tombol AI di atas..."></textarea>
+              <div class="form-text small">Deskripsi dapat diedit kembali sebelum disimpan ke database.</div>
+            </div>
+
+          </div>
+
+          <div class="modal-footer bg-light border-top py-2">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary fw-semibold" id="btn-save-destination">
+              <i class="bi bi-check2-circle me-1"></i>Simpan Destinasi
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: Detail / Preview Destinasi -->
+  <!-- ========================================================================= -->
+  <div class="modal fade" id="modal-view-destination" tabindex="-1" aria-labelledby="modal-view-destination-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-light border-bottom">
+          <h5 class="modal-title fw-bold" id="modal-view-destination-title">
+            <i class="bi bi-info-circle-fill text-info me-2"></i>Detail Destinasi
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="text-center mb-3">
+            <img id="view-destination-image" src="" alt="Foto Destinasi" class="img-fluid rounded border shadow-sm" style="max-height: 220px; object-fit: cover; width: 100%;" />
+          </div>
+
+          <h4 class="fw-bold text-dark mb-1" id="view-destination-name">-</h4>
+          <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+            <span id="view-destination-category"></span>
+            <span id="view-destination-city"></span>
+            <span id="view-destination-map"></span>
+          </div>
+
+          <div class="bg-light p-3 rounded mb-3 border">
+            <span class="text-muted small d-block">Harga Tiket Masuk</span>
+            <span class="fs-4 fw-bold text-primary" id="view-destination-price">Rp 0</span>
+          </div>
+
+          <div class="mb-3">
+            <span class="fw-semibold small text-muted text-uppercase d-block mb-1">Deskripsi:</span>
+            <div class="p-3 bg-white border rounded small text-secondary" id="view-destination-description" style="max-height: 200px; overflow-y: auto; line-height: 1.6;">
+              -
+            </div>
+          </div>
+
+          <div class="border-top pt-2 mt-3 small text-muted d-flex justify-content-between">
+            <span>Dibuat oleh: <strong id="view-destination-creator" class="text-dark">-</strong></span>
+            <span id="view-destination-date">-</span>
+          </div>
+        </div>
+        <div class="modal-footer bg-light border-top py-2">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: Konfirmasi Hapus Destinasi -->
+  <!-- ========================================================================= -->
+  <div class="modal fade" id="modal-delete-destination" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-body text-center p-4">
+          <div class="text-danger mb-3">
+            <i class="bi bi-exclamation-triangle-fill display-4"></i>
+          </div>
+          <h5 class="fw-bold mb-2">Hapus Destinasi?</h5>
+          <p class="text-muted small mb-4">
+            Apakah Anda yakin ingin menghapus <strong id="delete-destination-name" class="text-dark">destinasi ini</strong>? Data yang sudah dihapus tidak dapat dikembalikan.
+          </p>
+          <div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-light btn-sm px-3" data-bs-dismiss="modal">Batal</button>
+            <button type="button" class="btn btn-danger btn-sm px-3 fw-semibold" id="btn-confirm-delete">
+              <i class="bi bi-trash me-1"></i>Hapus
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/js/include-partials.js"></script>
   <script src="/js/navbar-auth.js"></script>
+  <script src="/js/admin-destinations.js"></script>
 </body>
 </html>

@@ -258,12 +258,24 @@ tanpa geocoding ulang.
 | DELETE | `/api/chat/history` | `requireAuth` | reset obrolan |
 | GET | `/api/admin/stats` | `requireAdmin` | hitungan agregat |
 
-### Belum dibuat (jatah mahasiswa)
+### Modul M2, M3, M4
 
-| Endpoint | PJ |
-| --- | --- |
-| `/api/articles` (CRUD) | M2 |
-| `/api/destinations` (CRUD) | M4 |
+| Method | Endpoint | Proteksi | Keterangan |
+| --- | --- | --- | --- |
+| GET | `/api/articles` · `/api/articles/:id` | — | daftar & detail artikel (M2) |
+| POST/PUT/DELETE | `/api/articles` · `/api/articles/:id` | `requireAdmin` | CRUD artikel (M2) |
+| POST | `/api/articles/generate-caption` | `requireAdmin` | AI caption (M2) |
+| POST | `/api/ai/destination-finder` | — | AI quiz rekomendasi (M3) |
+| GET | `/api/destinations` · `/api/destinations/:id` | — | katalog & detail (M4) |
+| GET | `/api/destinations/stats` | — | statistik katalog (M4) |
+| POST/PUT/DELETE | `/api/destinations` · `/api/destinations/:id` | `requireAdmin` | CRUD destinasi (M4) |
+| POST | `/api/destinations/ai-description` | `requireAdmin` | AI deskripsi (M4) |
+| GET | `/api/geo/search?q=` | `requireAuth` | nama tempat → koordinat |
+
+Endpoint baca (`GET`) untuk artikel & destinasi sengaja dibuka tanpa
+login, karena landing page (M1) dan halaman browse (M3) harus bisa
+menampilkan isinya ke pengunjung yang belum punya akun. Tulis, ubah, dan
+hapus tetap khusus admin.
 
 ## 9. Rincian Fitur per Mahasiswa
 
@@ -274,13 +286,13 @@ tanpa geocoding ulang.
 - AI (Gemini) menarasikan rekomendasi waktu berkunjung berdasarkan data cuaca itu
 - File: `views/user/landing.html`
 
-### M2 — CRUD Artikel + AI Caption
+### M2 — CRUD Artikel + AI Caption ✅ SELESAI
 
 - CRUD artikel wisata di admin (create, read, update, delete)
 - Tombol "Generate Caption dengan AI" — kirim judul/isi ke Gemini, dapat beberapa opsi
 - File: `views/admin/articles.html`, model `models/article.model.js`
 
-### M3 — Browse Destinasi + AI Destination Finder
+### M3 — Browse Destinasi + AI Destination Finder ✅ SELESAI
 
 - User bisa lihat & filter katalog destinasi (`GET /api/destinations`, dari M4)
 - Quiz singkat (2–3 pertanyaan) → AI merekomendasikan kategori/destinasi yang cocok
@@ -289,7 +301,7 @@ tanpa geocoding ulang.
   jarak dari user (helper: `public/js/geo-client.js`)
 - File: `views/user/destinations.html`
 
-### M4 — CRUD Destinasi + AI Deskripsi
+### M4 — CRUD Destinasi + AI Deskripsi ✅ SELESAI
 
 - CRUD destinasi di admin
 - Tombol "Generate Deskripsi dengan AI" — kirim nama + kategori + kota ke Gemini

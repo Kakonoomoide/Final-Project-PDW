@@ -10,8 +10,11 @@
 ## API (kirim JSON)
 
 - `auth.routes.js` — `/api/auth/*` (register, login, logout, me)
+- `article.routes.js` — `/api/articles/*` (M2), baca publik, tulis `requireAdmin`
+- `browse-destination.routes.js` — `/api/ai/destination-finder` (M3)
+- `destination.routes.js` — `/api/destinations/*` (M4), baca publik, tulis `requireAdmin`
 - `trip.routes.js` — `/api/trips/*` (M5), semuanya `requireAuth`
-- `geo.routes.js` — `/api/geo/reverse` (M5), `requireAuth`
+- `geo.routes.js` — `/api/geo/reverse` & `/api/geo/search`, `requireAuth`
 - `admin.routes.js` — `/api/admin/stats`, `requireAdmin`
 - `chat.routes.js` — `/api/chat/*` (M5), semuanya `requireAuth`
 
@@ -26,5 +29,8 @@ duluan sebelum request-nya sampai ke router chat. Router chat punya
 parser sendiri dengan limit lebih besar. Alasan lengkapnya ada di
 komentar `app.js`.
 
-**2. `/generate` didaftarkan SEBELUM `/:id`.** Kalau kebalik, Express
-akan menganggap "generate" sebagai sebuah id.
+**2. Route spesifik didaftarkan SEBELUM `/:id`.** Berlaku di beberapa
+tempat: `/generate` di `trip.routes.js`, `/generate-caption` di
+`article.routes.js`, serta `/stats` dan `/ai-description` di
+`destination.routes.js`. Kalau kebalik, Express akan menganggap kata
+itu sebagai sebuah id.

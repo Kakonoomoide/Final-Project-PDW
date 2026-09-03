@@ -8,27 +8,22 @@ dengan estimasi biaya, lalu tiap tempatnya diverifikasi ke OpenStreetMap
 dan dipetakan. Kerjaan tim; pembagian fitur & detail lengkap ada di
 [`PRD.md`](./PRD.md).
 
-## Yang udah jadi
+## Status pengerjaan
 
-1. ✅ Login admin & register user biasa (session-based, 1 tabel `users`
-   dibedain lewat `role`) — instruktur
-2. ✅ Struktur database lengkap (9 tabel) — instruktur
-3. ✅ Navbar & sidebar admin, navbar user (reusable lewat partial HTML) — instruktur
-4. ✅ **Fitur M5**: perencana rute wisata + peta + geolocation + asisten AI
-
-## Yang masih placeholder
-
-Semua halaman di bawah udah ke-wire navbar/sidebar-nya, tinggal ganti
-`<h1>` placeholder-nya jadi UI beneran. Tiap file udah dikasih komentar
-TODO berisi endpoint & model apa yang tersedia. Lihat `PRD.md` bagian 9.
-
-| Halaman | Mahasiswa | Fitur |
+| Modul | Fitur | Status |
 |---|---|---|
-| `views/user/landing.html` | M1 | Landing page + cuaca kota tujuan + AI waktu berkunjung |
-| `views/admin/articles.html` | M2 | CRUD Artikel wisata + AI caption |
-| `views/user/destinations.html` | M3 | Browse destinasi + AI destination finder |
-| `views/admin/destinations.html` | M4 | CRUD Destinasi + AI deskripsi |
-| ~~`views/user/planner.html`~~ | ~~M5~~ | ✅ **SELESAI** |
+| Instruktur | Login admin & register user (session, 1 tabel `users` dibedain `role`) | ✅ |
+| Instruktur | Struktur database (9 tabel) | ✅ |
+| Instruktur | Navbar & sidebar reusable lewat partial HTML | ✅ |
+| **M1** | Landing page + cuaca kota tujuan + AI waktu berkunjung | ⏳ placeholder |
+| **M2** | CRUD Artikel wisata + AI caption | ✅ |
+| **M3** | Browse destinasi + AI destination finder (quiz) | ✅ |
+| **M4** | CRUD Destinasi + AI deskripsi | ✅ |
+| **M5** | Perencana rute wisata + peta + geolocation + asisten AI | ✅ |
+
+Tinggal `views/user/landing.html` (M1) yang masih placeholder. File-nya
+sudah berisi komentar TODO berisi endpoint & model apa yang tersedia —
+lihat `PRD.md` bagian 9.
 
 ## Cara install & jalanin
 
@@ -81,10 +76,13 @@ final-project-pdw/
 ├── app.js
 ├── config/          # env & koneksi database
 ├── models/          # 9 model Sequelize
-├── controllers/     # auth, page, trip, geo, admin, chat
-├── services/        # auth, gemini, geo, trip, itinerarySchema, chat, health
+├── controllers/     # auth, page, article, destination, browse-destination,
+│                    #   trip, geo, admin, chat
+├── services/        # auth, gemini, geo, article, destination,
+│                    #   browse-destination, trip, itinerarySchema, chat, health
 ├── middlewares/     # requireAuth, requireAdmin, requireAdminPage
-├── routes/          # auth, page, admin.page, admin, trip, geo, chat
+├── routes/          # auth, page, admin.page, admin, article, destination,
+│                    #   browse-destination, trip, geo, chat
 ├── utils/           # response.js (format response seragam)
 ├── seeders/         # admin default + destinasi & artikel dummy
 ├── test/            # unit test (node:test)
@@ -94,7 +92,9 @@ final-project-pdw/
 │   ├── admin/       # dashboard.html + placeholder M2, M4
 │   └── user/        # landing (M1), destinations (M3), planner + trip + chat (M5)
 └── public/
-    ├── js/          # include-partials, navbar-auth, auth, chat, planner, trip-map, geo-client
+    ├── css/         # articles.css
+    ├── js/          # include-partials, navbar-auth, auth, articles,
+    │                #   admin-destinations, chat, planner, trip-map, geo-client
     └── partials/    # navbar-admin, sidebar-admin, navbar-user
 ```
 
@@ -123,6 +123,33 @@ Ikutin pola yang udah ada di `auth.*` atau `trip.*`:
    balikin lewat `sendResponse()`
 3. `routes/<nama>.routes.js` — daftarin path + method + middleware
 4. Mount di `app.js`: `app.use('/api/<nama>', require('./routes/<nama>.routes'))`
+
+## Endpoint M2, M3 & M4
+
+| Method | Endpoint | Proteksi | Modul |
+|---|---|---|---|
+| GET | `/api/articles` | publik | M2 |
+| GET | `/api/articles/:id` | publik | M2 |
+| POST | `/api/articles` | admin | M2 |
+| PUT | `/api/articles/:id` | admin | M2 |
+| DELETE | `/api/articles/:id` | admin | M2 |
+| POST | `/api/articles/generate-caption` | admin | M2 |
+| POST | `/api/ai/destination-finder` | publik | M3 |
+| GET | `/api/destinations` | publik | M4 |
+| GET | `/api/destinations/stats` | publik | M4 |
+| GET | `/api/destinations/:id` | publik | M4 |
+| POST | `/api/destinations` | admin | M4 |
+| PUT | `/api/destinations/:id` | admin | M4 |
+| DELETE | `/api/destinations/:id` | admin | M4 |
+| POST | `/api/destinations/ai-description` | admin | M4 |
+
+Baca (`GET`) sengaja dibuka tanpa login: landing page (M1) dan halaman
+browse (M3) perlu menampilkan artikel & destinasi ke pengunjung yang
+belum punya akun. Tulis/ubah/hapus tetap khusus admin.
+
+Catatan M4: kolom `lat`/`lng` boleh dikosongkan saat menyimpan destinasi
+— server otomatis mencarinya ke OpenStreetMap dari nama + kota. Kalau
+tidak ketemu, destinasi tetap tersimpan tapi ditandai "belum dipetakan".
 
 ## Fitur M5 — Perencana Rute Wisata
 

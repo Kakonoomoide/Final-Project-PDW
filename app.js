@@ -9,6 +9,9 @@ const authRoutes = require('./routes/auth.routes');
 const pageRoutes = require('./routes/page.routes');
 const adminPageRoutes = require('./routes/admin.page.routes');
 const adminRoutes = require('./routes/admin.routes');
+const articleRoutes = require('./routes/article.routes'); // M2
+const browseDestinationRoutes = require('./routes/browse-destination.routes'); // M3
+const destinationRoutes = require('./routes/destination.routes'); // M4
 const chatRoutes = require('./routes/chat.routes'); // M5
 const tripRoutes = require('./routes/trip.routes'); // M5
 const geoRoutes = require('./routes/geo.routes'); // M5
@@ -38,6 +41,9 @@ app.use('/api/chat', chatRoutes); // M5
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/articles', articleRoutes); // M2
+app.use('/api/ai', browseDestinationRoutes); // M3 -> /api/ai/destination-finder
+app.use('/api/destinations', destinationRoutes); // M4
 app.use('/api/trips', tripRoutes); // M5
 app.use('/api/geo', geoRoutes); // M5
 app.use('/api/admin', adminRoutes);

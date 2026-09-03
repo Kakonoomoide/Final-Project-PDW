@@ -12,7 +12,7 @@
     "db:reset": "node -e \"require('fs').rmSync(process.env.DB_STORAGE||'./database.sqlite',{force:true})\" && npm run seed"
   },
   "dependencies": {
-    "@google/genai": "^0.6.1",
+    "@google/genai": "^2.19.0",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
