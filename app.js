@@ -8,7 +8,10 @@ const { sequelize } = require('./models');
 const authRoutes = require('./routes/auth.routes');
 const pageRoutes = require('./routes/page.routes');
 const adminPageRoutes = require('./routes/admin.page.routes');
+const adminRoutes = require('./routes/admin.routes');
 const chatRoutes = require('./routes/chat.routes'); // M5
+const tripRoutes = require('./routes/trip.routes'); // M5
+const geoRoutes = require('./routes/geo.routes'); // M5
 
 const app = express();
 
@@ -23,18 +26,21 @@ app.use(
   })
 );
 
-// M5 sengaja dimount SEBELUM express.json() global. Alasannya: fitur
-// deteksi hama ngirim foto sebagai base64 di dalam body JSON, ukurannya
-// bisa megabyte-an, sedangkan express.json() default cuma nerima 100kb
-// dan bakal nolak duluan sebelum request-nya nyampe router chat. Router
-// chat punya parser JSON sendiri dengan limit lebih gede (liat
-// routes/chat.routes.js), jadi limit gede itu cuma berlaku di endpoint
-// M5 - endpoint lain tetep aman di 100kb.
+// Router chat sengaja dimount SEBELUM express.json() global. Alasannya:
+// fitur identifikasi tempat ngirim foto sebagai base64 di dalam body
+// JSON, ukurannya bisa megabyte-an, sedangkan express.json() default
+// cuma nerima 100kb dan bakal nolak duluan sebelum request-nya nyampe
+// router chat. Router chat punya parser JSON sendiri dengan limit lebih
+// gede (liat routes/chat.routes.js), jadi limit gede itu cuma berlaku di
+// endpoint chat - endpoint lain tetep aman di 100kb.
 app.use('/api/chat', chatRoutes); // M5
 
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/trips', tripRoutes); // M5
+app.use('/api/geo', geoRoutes); // M5
+app.use('/api/admin', adminRoutes);
 app.use('/admin', adminPageRoutes);
 app.use('/', pageRoutes);
 
