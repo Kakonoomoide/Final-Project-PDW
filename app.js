@@ -12,6 +12,8 @@ const adminPageRoutes = require('./routes/admin.page.routes');
 
 const newsRoutes = require('./routes/news.routes');
 
+const browseproductRoutes = require('./routes/browse-product.routes');
+
 const app = express();
 
 app.use(express.json());
@@ -29,6 +31,9 @@ app.use(
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes); // M4: CRUD Produk + AI Deskripsi
 app.use('/api/news', newsRoutes);
+
+app.use('/api/ai', browseproductRoutes); // MOUNT API M3 DI SINI (Menghubungkan /api/ai/product-finder)
+
 app.use('/admin', adminPageRoutes);
 app.use('/', pageRoutes);
 
