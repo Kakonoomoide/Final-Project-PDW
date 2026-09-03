@@ -1,17 +1,17 @@
 /**
- * Client-side fitur M5: chat konsultasi pertanian + deteksi hama/penyakit
+ * Client-side fitur M5: chat asisten perjalanan + identifikasi tempat
  * lewat foto. Vanilla JS, polanya sama kayak file JS lain di project ini:
  * fetch ke API -> render manual ke DOM.
  *
  * Endpoint yang dipake (semuanya butuh login):
  *   GET    /api/chat/history  - riwayat obrolan
  *   POST   /api/chat          - kirim pesan teks
- *   POST   /api/chat/detect   - kirim foto buat dianalisa
+ *   POST   /api/chat/detect   - kirim foto tempat buat dikenali
  *   DELETE /api/chat/history  - reset obrolan
  */
 
 // Ukuran maksimal sisi terpanjang foto sebelum dikirim. Foto dari HP
-// gampang 3-5MB, padahal buat diagnosis daun gak butuh resolusi segitu.
+// gampang 3-5MB, padahal buat ngenalin sebuah tempat gak butuh segitu.
 // Dikecilin dulu di browser biar upload-nya cepet & gak nabrak limit body.
 const MAX_DIMENSI_FOTO = 1024;
 const KUALITAS_JPEG = 0.8;
@@ -87,11 +87,11 @@ async function muatRiwayat() {
 function tampilkanSambutan() {
   tambahBubble(
     'model',
-    'Halo! 👋 Saya asisten penyuluh Tani Makmur.\n\n' +
-      'Silakan tanya apa saja soal pertanian — mulai dari pemilihan bibit, ' +
-      'pemupukan, sampai cara ngatasin hama.\n\n' +
-      'Kalau tanamanmu keliatan sakit, upload fotonya di bawah, nanti saya ' +
-      'bantu deteksi hama atau penyakitnya. 🌱',
+    'Halo! 👋 Saya asisten perjalanan TrAvelIt.\n\n' +
+      'Tanya apa saja soal liburan — mulai dari pilihan destinasi, ' +
+      'perkiraan budget, sampai transportasi antar kota.\n\n' +
+      'Punya foto tempat tapi lupa itu di mana? Upload di bawah, nanti ' +
+      'saya bantu kenali. 🧭',
     { scroll: false }
   );
 }
@@ -133,7 +133,7 @@ async function handleKirimPesan(e) {
   }
 }
 
-/* ================== deteksi hama/penyakit dari foto ================== */
+/* ================== identifikasi tempat dari foto ================== */
 
 function handlePilihFoto() {
   const file = el.fotoInput.files[0];
@@ -201,13 +201,13 @@ async function handleAnalisaFoto() {
   const catatan = el.fotoNote.value.trim();
   const fotoDikirim = fotoTerpilih;
 
-  tambahBubble('user', catatan ? '📷 Foto tanaman — ' + catatan : '📷 Foto tanaman dikirim', {
+  tambahBubble('user', catatan ? '📷 Foto tempat — ' + catatan : '📷 Foto tempat dikirim', {
     hasImage: true,
     previewSrc: fotoDikirim,
   });
 
   setProses(true);
-  const loading = tambahLoading('Sedang menganalisa foto');
+  const loading = tambahLoading('Sedang mengenali tempat');
 
   try {
     const res = await fetch('/api/chat/detect', {
@@ -226,7 +226,7 @@ async function handleAnalisaFoto() {
     el.fotoNote.value = '';
   } catch (err) {
     loading.remove();
-    tambahBubble('model', '⚠️ Gagal menganalisa foto: ' + err.message);
+    tambahBubble('model', '⚠️ Gagal mengenali tempat: ' + err.message);
   } finally {
     setProses(false);
   }
@@ -299,7 +299,7 @@ function tambahBubble(role, teks, options) {
     img.src = previewSrc;
     img.className = 'img-fluid rounded mb-2 d-block';
     img.style.maxHeight = '160px';
-    img.alt = 'Foto tanaman';
+    img.alt = 'Foto tempat';
     bubble.appendChild(img);
   }
 
@@ -328,7 +328,7 @@ function tambahLoading(label) {
   return wrap;
 }
 
-// Ngunci tombol kirim & analisa selama nunggu balasan AI, biar user gak
+// Ngunci tombol kirim & kenali selama nunggu balasan AI, biar user gak
 // nge-spam request (tiap request itu manggil API Gemini beneran).
 function setProses(aktif) {
   lagiProses = aktif;

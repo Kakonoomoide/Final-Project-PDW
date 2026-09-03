@@ -2,9 +2,12 @@ const { ChatMessage } = require('../models');
 const gemini = require('./gemini.service');
 
 /**
- * Logic fitur M5: chat konsultasi pertanian (multi-turn) + deteksi
- * hama/penyakit dari foto tanaman. Urusan HTTP-nya ada di
+ * Logic fitur M5: chat asisten perjalanan (multi-turn) + identifikasi
+ * tempat dari foto. Urusan HTTP-nya ada di
  * controllers/chat.controller.js, di sini murni logic + query database.
+ *
+ * Fitur ini pelengkap perencana rute (services/trip.service.js): chat
+ * buat nanya-nanya dan nimbang-nimbang, planner buat nyusun jadwalnya.
  */
 
 // Berapa pesan terakhir yang dikirim balik ke Gemini sebagai konteks.
@@ -18,44 +21,52 @@ const MAX_HISTORY = 20;
  * bisa ketimpa sama pesan user berikutnya.
  */
 const SYSTEM_INSTRUCTION = `
-Kamu adalah penyuluh pertanian di toko bahan pertanian "Tani Makmur".
-Tugasmu bantu petani Indonesia konsultasi seputar pertanian.
+Kamu adalah asisten perjalanan di aplikasi TrAvelIt.
+Tugasmu bantu wisatawan Indonesia merencanakan dan menjalani perjalanan.
 
 Aturan menjawab:
 - Selalu jawab dalam Bahasa Indonesia yang santai tapi sopan.
 - Jawab ringkas dan langsung ke inti (maksimal sekitar 4 paragraf pendek).
-- Kalau menjelaskan langkah-langkah, pakai poin bernomor.
-- Kalau menyarankan pupuk/pestisida, sebutkan bahan aktif atau jenisnya
-  (misal "pupuk NPK 16-16-16"), jangan cuma merek dagang.
-- Kalau pertanyaannya kurang jelas (belum jelas tanaman apa, umur berapa,
-  gejalanya gimana), tanya balik dulu sebelum kasih kesimpulan.
-- Kalau ditanya hal DI LUAR pertanian, tolak dengan halus dan arahkan
-  balik ke topik pertanian.
-- Jangan mengarang. Kalau memang belum yakin, bilang belum yakin dan
-  sarankan cek ke penyuluh setempat.
+- Kalau menjelaskan langkah-langkah atau urutan kunjungan, pakai poin bernomor.
+- Kalau menyebut biaya, sebutkan sebagai PERKIRAAN dan sertakan satuannya
+  (misal "sekitar Rp 50.000 per orang"), jangan seolah-olah harga pasti.
+- Kalau pertanyaannya kurang jelas (belum jelas kota tujuannya, berapa hari,
+  budget berapa, pergi berapa orang), tanya balik dulu sebelum menyarankan.
+- Kalau user minta dibuatkan itinerary lengkap, jawab seadanya lalu arahkan
+  ke halaman "Rencana Perjalanan" (/planner) yang bisa menyusun jadwal
+  harian sekaligus memetakannya.
+- Kalau ditanya hal DI LUAR perjalanan dan pariwisata, tolak dengan halus
+  dan arahkan balik ke topik perjalanan.
+- Jangan mengarang nama tempat, harga tiket, atau jadwal transportasi.
+  Kalau belum yakin, bilang belum yakin dan sarankan cek ke sumber resmi.
 `.trim();
 
 /**
  * Instruksi khusus buat analisa foto. Dipisah dari system instruction
- * chat karena outputnya beda: di sini maunya format diagnosis yang
+ * chat karena outputnya beda: di sini maunya format identifikasi yang
  * terstruktur, biar user gampang baca hasilnya.
  */
 const VISION_INSTRUCTION = `
 ${SYSTEM_INSTRUCTION}
 
-Sekarang kamu lagi menganalisa FOTO tanaman yang dikirim user.
+Sekarang kamu lagi menganalisa FOTO tempat yang dikirim user.
 Jawab dengan struktur persis seperti ini:
 
-**Tanaman:** (perkiraan jenis tanamannya, kalau tidak yakin bilang tidak yakin)
-**Diagnosis:** (dugaan hama/penyakit/defisiensi nutrisi, atau "terlihat sehat")
+**Perkiraan tempat:** (nama tempat atau landmark, atau "tidak bisa dipastikan")
+**Lokasi:** (kota & negara kalau bisa ditebak)
 **Tingkat keyakinan:** (tinggi / sedang / rendah)
-**Gejala yang terlihat:** (poin-poin apa yang kamu lihat di foto)
-**Saran penanganan:** (langkah bernomor, dari yang paling murah/mudah dulu)
-**Pencegahan:** (biar tidak terulang)
+**Yang terlihat di foto:** (poin-poin ciri yang kamu pakai buat menebak)
+**Kenapa menarik dikunjungi:** (2-3 poin singkat)
+**Tips berkunjung:** (waktu terbaik, perkiraan biaya masuk, yang perlu disiapkan)
 
-Kalau fotonya buram, kegelapan, atau BUKAN foto tanaman, jangan mengarang
-diagnosis - bilang saja fotonya kurang jelas dan minta user foto ulang
-bagian tanaman yang bermasalah dari jarak dekat.
+Kalau fotonya buram, kegelapan, atau BUKAN foto tempat/pemandangan, jangan
+mengarang - bilang saja fotonya kurang jelas dan minta user kirim foto lain
+yang memperlihatkan bangunan atau pemandangannya.
+
+PENTING: jangan menebak nama tempat yang spesifik kalau keyakinanmu rendah.
+Lebih baik bilang "ini terlihat seperti pantai tropis, tapi saya tidak bisa
+memastikan yang mana" daripada menyebut nama yang keliru - orang bisa saja
+merencanakan perjalanan berdasarkan jawabanmu.
 `.trim();
 
 /** Ambil riwayat chat seorang user, urut dari yang paling lama. */
@@ -105,7 +116,7 @@ async function sendMessage({ userId, message }) {
 }
 
 /**
- * Deteksi hama/penyakit dari foto (Gemini Vision).
+ * Identifikasi tempat dari foto (Gemini Vision).
  *
  * Fotonya dikirim dari browser sebagai data URL
  * ("data:image/jpeg;base64,....") terus dipecah jadi mimeType + base64
@@ -117,18 +128,18 @@ function parseDataUrl(dataUrl) {
   return { mimeType: match[1], data: match[2] };
 }
 
-async function detectDisease({ userId, imageDataUrl, note }) {
+async function identifyPlace({ userId, imageDataUrl, note }) {
   const image = parseDataUrl(imageDataUrl);
   if (!image) {
     return { success: false, message: 'Format foto gak didukung (pakai JPG, PNG, atau WEBP)' };
   }
 
   const pertanyaan = note?.trim()
-    ? `Tolong analisa foto tanaman ini. Catatan tambahan dari saya: ${note.trim()}`
-    : 'Tolong analisa foto tanaman ini, ada masalah apa dan gimana penanganannya?';
+    ? `Tolong kenali foto tempat ini. Catatan tambahan dari saya: ${note.trim()}`
+    : 'Tolong kenali foto tempat ini, ini di mana dan menariknya apa?';
 
   // Riwayat obrolan ikut dikirim biar AI-nya nyambung kalo sebelumnya
-  // user udah cerita nanam apa / lahannya di mana.
+  // user udah cerita mau ke kota mana / budgetnya berapa.
   const riwayat = toGeminiHistory(await getHistory(userId));
 
   const reply = await gemini.generate({
@@ -157,4 +168,4 @@ async function clearHistory(userId) {
   return ChatMessage.destroy({ where: { userId } });
 }
 
-module.exports = { getHistory, sendMessage, detectDisease, clearHistory };
+module.exports = { getHistory, sendMessage, identifyPlace, clearHistory };

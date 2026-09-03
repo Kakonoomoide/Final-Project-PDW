@@ -2,16 +2,16 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
 /**
- * Riwayat chat konsultasi pertanian (M5). PRD bagian 4 ngebolehin nambah
+ * Riwayat chat asisten perjalanan (M5). PRD bagian 4 ngebolehin nambah
  * tabel sendiri kalo fiturnya butuh - chat multi-turn butuh riwayat,
  * soalnya Gemini gak nyimpen konteks percakapan di sisi mereka. Tiap
  * giliran ngobrol disimpen 1 baris, terus pas user nanya lagi riwayatnya
  * dikirim ulang sebagai konteks (liat services/chat.service.js).
  *
- * Hasil deteksi foto ikut disimpen di tabel yang SAMA (bukan tabel
- * terpisah) biar chat & deteksi tampil dalam satu utas percakapan, dan
- * hasil diagnosis bisa ditanyain lanjut ("terus obatnya apa?"). Yang
- * nandain baris itu dari foto cuma kolom `hasImage`.
+ * Hasil identifikasi foto ikut disimpen di tabel yang SAMA (bukan tabel
+ * terpisah) biar chat & foto tampil dalam satu utas percakapan, dan
+ * hasilnya bisa ditanyain lanjut ("dari Jakarta ke situ naik apa?").
+ * Yang nandain baris itu dari foto cuma kolom `hasImage`.
  */
 const ChatMessage = sequelize.define(
   'ChatMessage',

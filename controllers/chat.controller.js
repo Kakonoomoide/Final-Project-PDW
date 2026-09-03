@@ -2,7 +2,7 @@ const chatService = require('../services/chat.service');
 const sendResponse = require('../utils/response');
 
 /**
- * Controller fitur M5 (chat konsultasi + deteksi hama/penyakit).
+ * Controller fitur M5 (chat asisten perjalanan + identifikasi tempat).
  * Tipis aja: validasi input, panggil service, bungkus pake sendResponse.
  *
  * Semua endpoint di sini dipasangin `requireAuth` di routes-nya, jadi
@@ -42,10 +42,10 @@ async function detect(req, res) {
     const { image, note } = req.body;
 
     if (!image) {
-      return sendResponse(res, { code: 400, success: false, message: 'Foto tanaman wajib diupload' });
+      return sendResponse(res, { code: 400, success: false, message: 'Foto tempat wajib diupload' });
     }
 
-    const result = await chatService.detectDisease({
+    const result = await chatService.identifyPlace({
       userId: req.session.userId,
       imageDataUrl: image,
       note,
@@ -55,7 +55,7 @@ async function detect(req, res) {
       return sendResponse(res, { code: 400, success: false, message: result.message });
     }
 
-    return sendResponse(res, { message: 'Analisa foto selesai', data: { reply: result.reply } });
+    return sendResponse(res, { message: 'Foto berhasil dianalisa', data: { reply: result.reply } });
   } catch (err) {
     return sendResponse(res, { code: 500, success: false, message: err.message });
   }
