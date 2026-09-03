@@ -1,13 +1,15 @@
 {
   "name": "final-project-pdw",
   "version": "1.0.0",
-  "description": "Final Project PDW - Toko Bahan Pertanian. Express + SQLite + HTML/Bootstrap + Gemini AI",
+  "description": "Final Project PDW - TrAvelIt, AI Travel Planner. Express + SQLite + HTML/Bootstrap + Gemini AI + Leaflet",
   "main": "app.js",
   "type": "commonjs",
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "seed": "node seeders/seed.js"
+    "seed": "node seeders/seed.js",
+    "test": "node --test test/",
+    "db:reset": "node -e \"require('fs').rmSync(process.env.DB_STORAGE||'./database.sqlite',{force:true})\" && npm run seed"
   },
   "dependencies": {
     "@google/genai": "^0.6.1",

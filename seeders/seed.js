@@ -12,12 +12,12 @@ async function seed() {
 
     const hashedPassword = await bcrypt.hash('admin123', SALT_ROUNDS);
     const [admin] = await User.findOrCreate({
-      where: { email: 'admin@tanimakmur.com' },
-      defaults: { name: 'Admin', password: hashedPassword, role: 'admin' },
+      where: { email: 'admin@travelit.com' },
+      defaults: { name: 'Admin TrAvelIt', password: hashedPassword, role: 'admin' },
     });
 
     console.log('Admin siap:', admin.email);
-    console.log('Login admin: email=admin@tanimakmur.com password=admin123');
+    console.log('Login admin: email=admin@travelit.com password=admin123');
     console.log('\nSeeding selesai ✅');
     process.exit(0);
   } catch (err) {
