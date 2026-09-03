@@ -31,6 +31,48 @@ function getClient() {
 }
 
 /**
+ * Terjemahin error mentah dari API Gemini jadi kalimat yang berguna.
+ *
+ * Error asli dari Gemini itu bentuknya JSON gede, contohnya:
+ *   {"error":{"code":429,"message":"You exceeded your current quota...
+ * Kalau itu dilempar apa adanya ke user, yang muncul di layar adalah
+ * dinding teks teknis yang gak ngasih tau dia harus ngapain.
+ *
+ * Ditaruh di sini (bukan di tiap service) supaya SEMUA fitur AI kebagian
+ * - caption M2, quiz M3, deskripsi M4, itinerary & chat M5. Pesan
+ * aslinya tetep masuk console buat yang ngoding.
+ */
+function pesanRamah(errorMentah) {
+  const teks = String(errorMentah || '');
+
+  if (/429|quota|rate limit|RESOURCE_EXHAUSTED/i.test(teks)) {
+    return 'Kuota AI lagi habis. Coba lagi beberapa saat lagi ya.';
+  }
+  if (/503|overload|high demand|unavailable/i.test(teks)) {
+    return 'Server AI lagi ramai. Coba lagi beberapa menit lagi ya.';
+  }
+  if (/API[_ ]?KEY|api key|401|403|PERMISSION_DENIED/i.test(teks)) {
+    return 'API key Gemini belum benar. Cek GEMINI_API_KEY di file .env.';
+  }
+  if (/timeout|ETIMEDOUT|ENOTFOUND|ECONNREFUSED|fetch failed|network/i.test(teks)) {
+    return 'Gagal menghubungi server AI. Cek koneksi internet kamu.';
+  }
+
+  return teks || 'Gagal memanggil AI';
+}
+
+/**
+ * Bungkus error mentah jadi Error dengan pesan yang bisa dibaca user.
+ * Yang aslinya disimpen di `.cause` biar gak ilang buat debugging.
+ */
+function errorRamah(err) {
+  console.error('[gemini]', err.message);
+  const baru = new Error(pesanRamah(err.message));
+  baru.cause = err;
+  return baru;
+}
+
+/**
  * Gemini kadang balikin 503 (lagi rame) atau 429 (kena limit) padahal
  * requestnya bener. Kalo langsung dilempar ke user, chat-nya keliatan
  * error mulu padahal cuma perlu diulang. Jadi dicoba ulang beberapa kali
@@ -65,13 +107,18 @@ async function callWithRetry(fn, maxAttempt = 3) {
 async function generate({ contents, systemInstruction }) {
   const ai = getClient();
 
-  const response = await callWithRetry(() =>
-    ai.models.generateContent({
-      model: config.geminiModel,
-      contents,
-      config: systemInstruction ? { systemInstruction } : undefined,
-    })
-  );
+  let response;
+  try {
+    response = await callWithRetry(() =>
+      ai.models.generateContent({
+        model: config.geminiModel,
+        contents,
+        config: systemInstruction ? { systemInstruction } : undefined,
+      })
+    );
+  } catch (err) {
+    throw errorRamah(err);
+  }
 
   const text = (response.text || '').trim();
   if (!text) throw new Error('Gemini gak ngasih balasan, coba lagi');
@@ -96,7 +143,12 @@ async function chat({ history = [], message, systemInstruction }) {
     config: systemInstruction ? { systemInstruction } : undefined,
   });
 
-  const response = await callWithRetry(() => session.sendMessage({ message }));
+  let response;
+  try {
+    response = await callWithRetry(() => session.sendMessage({ message }));
+  } catch (err) {
+    throw errorRamah(err);
+  }
 
   const text = (response.text || '').trim();
   if (!text) throw new Error('Gemini gak ngasih balasan, coba lagi');
@@ -122,17 +174,22 @@ async function chat({ history = [], message, systemInstruction }) {
 async function generateJson({ prompt, systemInstruction, responseSchema }) {
   const ai = getClient();
 
-  const response = await callWithRetry(() =>
-    ai.models.generateContent({
-      model: config.geminiModel,
-      contents: prompt,
-      config: {
-        ...(systemInstruction ? { systemInstruction } : {}),
-        responseMimeType: 'application/json',
-        ...(responseSchema ? { responseSchema } : {}),
-      },
-    })
-  );
+  let response;
+  try {
+    response = await callWithRetry(() =>
+      ai.models.generateContent({
+        model: config.geminiModel,
+        contents: prompt,
+        config: {
+          ...(systemInstruction ? { systemInstruction } : {}),
+          responseMimeType: 'application/json',
+          ...(responseSchema ? { responseSchema } : {}),
+        },
+      })
+    );
+  } catch (err) {
+    throw errorRamah(err);
+  }
 
   const text = (response.text || '').trim();
   if (!text) throw new Error('Gemini gak ngasih balasan, coba lagi');
@@ -242,6 +299,7 @@ Panduan Penulisan:
 
 module.exports = {
   getClient,
+  pesanRamah,
   generate,
   chat,
   generateJson,
