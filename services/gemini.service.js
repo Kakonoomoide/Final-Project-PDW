@@ -8,11 +8,12 @@ const config = require('./../config/env');
  * kali sama M5 karena kebetulan butuh duluan.
  *
  * Mahasiswa lain tinggal nambah fungsi baru di file ini, misal:
- *   - generateCaption()     -> M2
- *   - generateDescription() -> M4
- *   - recommendProducts()   -> M3
- * dan pake helper `generate()` / `callWithRetry()` di bawah biar gak
- * nulis ulang urusan API key + retry.
+ *   - generateCaption()        -> M2 (caption artikel wisata)
+ *   - generateDescription()    -> M4 (deskripsi destinasi)
+ *   - recommendDestinations()  -> M3 (hasil quiz destination finder)
+ *   - narasiWaktuBerkunjung()  -> M1 (gabungan data cuaca + narasi AI)
+ * dan pake helper `generate()` / `generateJson()` / `callWithRetry()` di
+ * bawah biar gak nulis ulang urusan API key + retry.
  */
 
 // Client-nya di-cache (dibikin sekali pas pertama dipake), bukan bikin
@@ -101,4 +102,57 @@ async function chat({ history = [], message, systemInstruction }) {
   return text;
 }
 
-module.exports = { getClient, generate, chat, callWithRetry };
+/**
+ * Versi buat fitur yang butuh JSON TERSTRUKTUR, bukan prosa - dipake M5
+ * buat generate itinerary.
+ *
+ * Bedanya sama `generate()`: `responseMimeType: 'application/json'` +
+ * `responseSchema` bikin Gemini balikin JSON beneran, bukan teks yang
+ * kebetulan mirip JSON. Ini jauh lebih andal daripada cuma nulis "BALAS
+ * DENGAN JSON SAJA" di prompt - instruksi kayak gitu gampang dilanggar,
+ * model suka nambahin ```json di depan atau kalimat pembuka.
+ *
+ * PENTING: meski udah pake schema, hasilnya TETEP divalidasi lagi di
+ * services/itinerarySchema.js. Schema cuma ngatur BENTUK-nya, gak bisa
+ * ngatur ISI-nya - Gemini tetep bisa ngasih 3 hari padahal diminta 5,
+ * atau ngarang tempat yang gak ada.
+ */
+async function generateJson({ prompt, systemInstruction, responseSchema }) {
+  const ai = getClient();
+
+  const response = await callWithRetry(() =>
+    ai.models.generateContent({
+      model: config.geminiModel,
+      contents: prompt,
+      config: {
+        ...(systemInstruction ? { systemInstruction } : {}),
+        responseMimeType: 'application/json',
+        ...(responseSchema ? { responseSchema } : {}),
+      },
+    })
+  );
+
+  const text = (response.text || '').trim();
+  if (!text) throw new Error('Gemini gak ngasih balasan, coba lagi');
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    // Jaring pengaman: kalau model tetep bandel ngasih ```json ... ```
+    // walau udah disuruh JSON mode, ambil kurung kurawal terluarnya aja.
+    const awal = text.indexOf('{');
+    const akhir = text.lastIndexOf('}');
+
+    if (awal !== -1 && akhir > awal) {
+      try {
+        return JSON.parse(text.slice(awal, akhir + 1));
+      } catch {
+        // tetep gagal, jatuh ke error di bawah
+      }
+    }
+
+    throw new Error('Balasan AI bukan JSON yang valid');
+  }
+}
+
+module.exports = { getClient, generate, chat, generateJson, callWithRetry };
