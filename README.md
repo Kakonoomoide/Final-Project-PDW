@@ -306,5 +306,8 @@ validator kontrak JSON dan perhitungan jarak. Detail & alasannya ada di
 ## Dokumen rancangan
 
 - [`PRD.md`](./PRD.md) — kebutuhan, skema database, pembagian kerja
+- [`docs/diagrams/`](./docs/diagrams/) — **diagram Mermaid**: use case,
+  activity, class, sequence, dan ERD (masing-masing tersedia sebagai
+  `.md` untuk pratinjau, `.mmd` untuk diedit, dan `.png` siap tempel)
 - [`docs/superpowers/specs/`](./docs/superpowers/specs/) — desain teknis
 - [`docs/superpowers/plans/`](./docs/superpowers/plans/) — rencana implementasi

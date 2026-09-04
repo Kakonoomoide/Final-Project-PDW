@@ -1,0 +1,124 @@
+erDiagram
+    USERS ||--o{ TRIPS : "membuat"
+    USERS ||--o{ CHAT_MESSAGES : "mengirim"
+    USERS ||--o{ DESTINATIONS : "mengurasi"
+    USERS ||--o{ ARTICLES : "menulis"
+
+    TRIPS ||--|| PREFERENCES : "punya"
+    TRIPS ||--o{ ITINERARIES : "punya versi"
+    ITINERARIES ||--o{ ITINERARY_DAYS : "terdiri dari"
+    ITINERARY_DAYS ||--o{ ACTIVITIES : "berisi"
+
+    USERS {
+        int id PK
+        string name
+        string email UK "unique"
+        string password "hash bcrypt"
+        string role "user | admin"
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    TRIPS {
+        int id PK
+        int userId FK "pemilik, wajib di setiap query"
+        string title
+        string destination
+        string originCity "opsional, bisa dari geolocation"
+        date startDate
+        date endDate
+        int durationDays "inklusif, maks 14"
+        int budget "rupiah, total semua orang"
+        int travelerCount "default 1"
+        string status "draft | generated | failed"
+        string lastError "pesan gagal terakhir"
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    PREFERENCES {
+        int id PK
+        int tripId FK "unique, 1:1 dengan trip"
+        text interests "JSON array"
+        string pace "santai | sedang | padat"
+        text specialNeeds "opsional"
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    ITINERARIES {
+        int id PK
+        int tripId FK
+        int version "naik tiap regenerate, tidak menimpa"
+        int totalEstimatedCost
+        string currency "default IDR"
+        string modelUsed "model Gemini saat generate"
+        datetime generatedAt
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    ITINERARY_DAYS {
+        int id PK
+        int itineraryId FK
+        int dayNumber "1..n"
+        date date "dihitung server dari startDate"
+        string summary
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    ACTIVITIES {
+        int id PK
+        int itineraryDayId FK
+        int orderNo "urutan dalam satu hari"
+        string startTime "format HH:MM"
+        string name
+        string category "wisata|kuliner|transport|penginapan|lainnya"
+        text description
+        int estimatedCost
+        float lat "null kalau tempat tidak ditemukan"
+        float lng
+        boolean placeVerified "true kalau ketemu di OpenStreetMap"
+        float distanceKmFromPrev "haversine, dihitung server"
+        int travelMinutesFromPrev "estimasi, asumsi 30 km per jam"
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    DESTINATIONS {
+        int id PK
+        string name
+        string category "pantai|gunung|budaya|kuliner|taman|lainnya"
+        string city
+        string province
+        text description "manual atau dibantu AI"
+        int ticketPrice "0 berarti gratis"
+        float lat "auto-geocode kalau dikosongkan"
+        float lng
+        string imageUrl
+        int createdBy FK "SET NULL kalau admin dihapus"
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    ARTICLES {
+        int id PK
+        string title
+        string caption "ringkasan, bisa dibantu AI"
+        text content
+        string imageUrl
+        int createdBy FK "SET NULL kalau admin dihapus"
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    CHAT_MESSAGES {
+        int id PK
+        int userId FK
+        string role "user | model"
+        text content
+        boolean hasImage "penanda pesan berasal dari foto"
+        datetime createdAt
+        datetime updatedAt
+    }

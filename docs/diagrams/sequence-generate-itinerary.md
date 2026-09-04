@@ -1,0 +1,105 @@
+# Sequence Diagram — POST /api/trips/generate
+
+Interaksi antar komponen saat user menekan tombol Susun Itinerary, termasuk jalur gagal: AI error, kontrak JSON ditolak, dan tempat tidak ditemukan di OpenStreetMap.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant B as Browser<br/>planner.js
+    participant R as Router<br/>requireAuth
+    participant C as TripController
+    participant S as TripService
+    participant V as ItinerarySchema
+    participant G as GeminiService
+    participant N as GeoService
+    participant DB as SQLite<br/>Sequelize
+    participant AI as Gemini API
+    participant OSM as Nominatim
+
+    U->>B: Isi form lalu tekan Susun Itinerary
+    B->>B: Kunci tombol, tampilkan overlay<br/>"biasanya 20-60 detik"
+    B->>R: POST /api/trips/generate
+
+    alt Belum login
+        R-->>B: 401 Belum login
+        B-->>U: Tampilkan ajakan login
+    else Sudah login
+        R->>C: teruskan request
+        C->>C: Validasi input
+
+        alt Input tidak valid
+            C-->>B: 400 pesan kesalahan
+            B-->>U: Tampilkan alert di atas form
+        else Input valid
+            C->>S: createAndGenerate(userId, input)
+            S->>DB: INSERT trip status draft
+            S->>DB: INSERT preferences
+            S->>S: bangunPrompt(trip, preference)
+
+            loop maksimal 2 percobaan
+                S->>G: generateJson(prompt, RESPONSE_SCHEMA)
+                G->>AI: generateContent<br/>responseMimeType application/json
+
+                alt Gemini error 429 atau 503
+                    AI-->>G: error mentah
+                    G->>G: callWithRetry lalu pesanRamah()
+                    G-->>S: Error "Kuota AI lagi habis"
+                else Gemini membalas
+                    AI-->>G: JSON itinerary
+                    G-->>S: objek hasil parse
+                    S->>V: validateItinerary(raw, durationDays)
+
+                    alt Kontrak tidak lolos
+                        V-->>S: ok false + daftar kesalahan
+                        Note over S: Prompt disusun ulang<br/>dengan kesalahan dilampirkan
+                    else Kontrak lolos
+                        V->>V: Normalisasi kategori, jam,<br/>koordinat, urutan hari
+                        V-->>S: ok true + data bersih
+                    end
+                end
+            end
+
+            alt Semua percobaan gagal
+                S->>DB: UPDATE trip status failed + lastError
+                S-->>C: success false
+                C-->>B: 502 pesan yang bisa dibaca user
+                B-->>U: Kartu trip dengan tombol Coba lagi
+            else Berhasil
+                loop tiap aktivitas non-transport
+                    S->>N: geocode(nama + destinasi)
+                    N->>N: Antre 1 permintaan per detik
+                    N->>OSM: GET /search
+                    alt Tempat ketemu
+                        OSM-->>N: lat, lng, displayName
+                        N-->>S: koordinat terverifikasi
+                        S->>S: placeVerified = true
+                    else Tidak ketemu atau jaringan gagal
+                        OSM-->>N: kosong
+                        N-->>S: null
+                        S->>S: Pakai koordinat AI bila ada<br/>placeVerified = false
+                    end
+                end
+
+                S->>N: haversineKm antar aktivitas per hari
+                N-->>S: jarak km dan estimasi menit
+
+                Note over S,DB: Panggilan AI dan Nominatim sudah selesai<br/>SEBELUM transaksi dibuka, supaya SQLite<br/>tidak terkunci puluhan detik
+                S->>DB: BEGIN TRANSACTION
+                S->>DB: INSERT itinerary versi n
+                S->>DB: INSERT itinerary_days
+                S->>DB: INSERT activities
+                S->>DB: UPDATE trip status generated
+                S->>DB: COMMIT
+
+                S-->>C: success true + trip
+                C-->>B: 201 Itinerary berhasil dibuat
+                B->>B: Arahkan ke /trip/:id
+                B->>R: GET /api/trips/:id
+                R-->>B: trip + itinerary versi terbaru
+                B->>B: Render accordion per hari<br/>dan peta Leaflet
+                B-->>U: Itinerary dan peta tampil
+            end
+        end
+    end
+```

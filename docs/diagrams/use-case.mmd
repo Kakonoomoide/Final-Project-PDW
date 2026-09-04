@@ -1,0 +1,87 @@
+flowchart LR
+    pengunjung(("Pengunjung"))
+    user(("User<br/>terdaftar"))
+    admin(("Admin"))
+    gemini[["Gemini API"]]
+    osm[["OpenStreetMap<br/>Nominatim"]]
+
+    subgraph publik["Akses tanpa login"]
+        ucDaftar([Registrasi akun])
+        ucLogin([Login])
+        ucBrowse([Browse destinasi])
+        ucFinder([Cari destinasi<br/>lewat quiz AI])
+        ucBacaArtikel([Baca artikel wisata])
+    end
+
+    subgraph m5["Perencana perjalanan - M5"]
+        ucIsiForm([Isi preferensi<br/>perjalanan])
+        ucGenerate([Generate itinerary])
+        ucValidasi([Validasi kontrak<br/>JSON dari AI])
+        ucVerifikasi([Verifikasi lokasi<br/>tiap tempat])
+        ucLihatTrip([Lihat itinerary<br/>dan peta])
+        ucRegenerate([Buat ulang<br/>jadi versi baru])
+        ucUbahTrip([Ubah data trip])
+        ucHapusTrip([Hapus trip])
+        ucLokasi([Pakai lokasi saya])
+    end
+
+    subgraph m5b["Asisten AI - M5"]
+        ucChat([Chat asisten<br/>perjalanan])
+        ucFoto([Identifikasi tempat<br/>dari foto])
+    end
+
+    subgraph adminArea["Kurasi konten - M2 dan M4"]
+        ucCrudArtikel([Kelola artikel wisata])
+        ucCaption([Generate caption AI])
+        ucCrudDestinasi([Kelola katalog destinasi])
+        ucDeskripsi([Generate deskripsi AI])
+        ucStats([Lihat statistik agregat])
+    end
+
+    pengunjung --> ucDaftar
+    pengunjung --> ucLogin
+    pengunjung --> ucBrowse
+    pengunjung --> ucFinder
+    pengunjung --> ucBacaArtikel
+
+    user --> ucIsiForm
+    user --> ucGenerate
+    user --> ucLihatTrip
+    user --> ucRegenerate
+    user --> ucUbahTrip
+    user --> ucHapusTrip
+    user --> ucChat
+    user --> ucFoto
+
+    admin --> ucCrudArtikel
+    admin --> ucCrudDestinasi
+    admin --> ucStats
+
+    ucGenerate -. "«include»" .-> ucValidasi
+    ucGenerate -. "«include»" .-> ucVerifikasi
+    ucRegenerate -. "«include»" .-> ucValidasi
+    ucRegenerate -. "«include»" .-> ucVerifikasi
+    ucIsiForm -. "«extend»" .-> ucLokasi
+    ucLihatTrip -. "«extend»" .-> ucRegenerate
+    ucCrudArtikel -. "«extend»" .-> ucCaption
+    ucCrudDestinasi -. "«extend»" .-> ucDeskripsi
+
+    ucGenerate --> gemini
+    ucFinder --> gemini
+    ucChat --> gemini
+    ucFoto --> gemini
+    ucCaption --> gemini
+    ucDeskripsi --> gemini
+    ucVerifikasi --> osm
+    ucLokasi --> osm
+    ucCrudDestinasi --> osm
+
+    admin -. "admin juga user biasa" .-> user
+    user -. "user juga bisa akses publik" .-> pengunjung
+
+    classDef aktor fill:#DBEAFE,stroke:#2563EB,stroke-width:2px,color:#1E3A5F
+    classDef eksternal fill:#FEF3C7,stroke:#D97706,stroke-width:2px,color:#78350F
+    classDef usecase fill:#FFFFFF,stroke:#64748B,stroke-width:1.5px,color:#1F2937
+    class pengunjung,user,admin aktor
+    class gemini,osm eksternal
+    class ucDaftar,ucLogin,ucBrowse,ucFinder,ucBacaArtikel,ucIsiForm,ucGenerate,ucValidasi,ucVerifikasi,ucLihatTrip,ucRegenerate,ucUbahTrip,ucHapusTrip,ucLokasi,ucChat,ucFoto,ucCrudArtikel,ucCaption,ucCrudDestinasi,ucDeskripsi,ucStats usecase
