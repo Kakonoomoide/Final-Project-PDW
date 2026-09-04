@@ -15,7 +15,7 @@ dan dipetakan. Kerjaan tim; pembagian fitur & detail lengkap ada di
 | Instruktur | Login admin & register user (session, 1 tabel `users` dibedain `role`) | ✅ |
 | Instruktur | Struktur database (9 tabel) | ✅ |
 | Instruktur | Navbar & sidebar reusable lewat partial HTML | ✅ |
-| **M1** | Landing page + cuaca kota tujuan + AI waktu berkunjung | ⏳ placeholder |
+| **M1** | Landing page + cuaca kota tujuan + AI waktu berkunjung | ✅ |
 | **M2** | CRUD Artikel wisata + AI caption | ✅ |
 | **M3** | Browse destinasi + AI destination finder (quiz) | ✅ |
 | **M4** | CRUD Destinasi + AI deskripsi | ✅ |
